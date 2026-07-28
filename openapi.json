@@ -1,0 +1,320 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "PROFIT TOOL — Enterprise Decision Support API",
+    "description": "Enterprise API for Shopify merchants providing AI decision support, rule evaluation, immutable evidence snapshots, and GDPR-compliant Shopify webhooks.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Profit Tool Enterprise Architecture",
+      "url": "https://ai.studio/build"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local / Containerized Ingress Server"
+    },
+    {
+      "url": "https://{shop}.myshopify.com",
+      "description": "Shopify Merchant Domain Bridge"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "BearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "JWT Authorization header using Bearer scheme. Token contains userId, storeId, and role."
+      },
+      "ShopifyHmac": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Shopify-Hmac-Sha256",
+        "description": "Timing-safe SHA256 HMAC verification header sent by Shopify webhook dispatcher."
+      }
+    },
+    "schemas": {
+      "AuthResponse": {
+        "type": "object",
+        "required": ["token", "refreshToken", "user"],
+        "properties": {
+          "token": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsIn..." },
+          "refreshToken": { "type": "string", "example": "eyJhbGciOiJIUzI1NiIsIn..." },
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string", "example": "usr_store_fashionista" },
+              "email": { "type": "string", "example": "owner@fashionistaboutique.com" },
+              "name": { "type": "string", "example": "Sarah Jenkins (Owner)" },
+              "role": { "type": "string", "enum": ["OWNER", "STAFF"], "example": "OWNER" },
+              "storeId": { "type": "string", "example": "store_fashionista" },
+              "storeName": { "type": "string", "example": "Fashionista Boutique" }
+            }
+          }
+        }
+      },
+      "Recommendation": {
+        "type": "object",
+        "required": ["id", "storeId", "cartId", "priority", "status", "actionTitle", "actionDescription", "confidenceScore", "aiExplanation"],
+        "properties": {
+          "id": { "type": "string", "example": "rec_001" },
+          "storeId": { "type": "string", "example": "store_fashionista" },
+          "cartId": { "type": "string", "example": "cart_test_1" },
+          "customerId": { "type": "string", "example": "cust_vip_1" },
+          "priority": { "type": "string", "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+          "status": { "type": "string", "enum": ["Open", "Updated", "Snoozed", "Completed", "Blocked"] },
+          "actionTitle": { "type": "string", "example": "Offer 10% VIP Recovery Coupon" },
+          "actionDescription": { "type": "string", "example": "Shopper abandoned $320 cart containing Silk Dress." },
+          "suggestedDiscountCode": { "type": "string", "example": "VIPRECOVER10" },
+          "suggestedDiscountValue": { "type": "number", "example": 10 },
+          "confidenceScore": { "type": "integer", "minimum": 0, "maximum": 100, "example": 92 },
+          "aiExplanation": { "type": "string", "example": "VIP customer with 6 prior orders ($1,250 LTV) abandoned cart over $150 threshold." },
+          "createdAt": { "type": "string", "format": "date-time" },
+          "updatedAt": { "type": "string", "format": "date-time" }
+        }
+      },
+      "EvidenceSnapshot": {
+        "type": "object",
+        "required": ["id", "recommendationId", "storeId", "cartId", "snapshotData", "timestamp"],
+        "properties": {
+          "id": { "type": "string", "example": "ev_001" },
+          "recommendationId": { "type": "string", "example": "rec_001" },
+          "storeId": { "type": "string", "example": "store_fashionista" },
+          "cartId": { "type": "string", "example": "cart_test_1" },
+          "snapshotData": { "type": "object" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      },
+      "RuleVersion": {
+        "type": "object",
+        "required": ["id", "storeId", "name", "description", "type", "conditionField", "operator", "thresholdValue", "weight", "isActive", "version"],
+        "properties": {
+          "id": { "type": "string", "example": "rule_core_1" },
+          "storeId": { "type": "string", "example": "store_fashionista" },
+          "name": { "type": "string", "example": "High-Value Cart Threshold" },
+          "description": { "type": "string", "example": "Triggers when cart total exceeds store configuration threshold." },
+          "type": { "type": "string", "enum": ["CORE", "EDGE", "CUSTOM"] },
+          "conditionField": { "type": "string", "example": "cart.totalValue" },
+          "operator": { "type": "string", "enum": [">", "<", ">=", "<=", "==", "!=", "IN", "CONTAINS"] },
+          "thresholdValue": { "type": "string", "example": "150" },
+          "weight": { "type": "integer", "minimum": 1, "maximum": 100, "example": 35 },
+          "isActive": { "type": "boolean", "example": true },
+          "version": { "type": "integer", "example": 1 }
+        }
+      },
+      "AuditLogEntry": {
+        "type": "object",
+        "required": ["id", "storeId", "actorId", "actorName", "actorRole", "action", "resourceType", "resourceId", "timestamp"],
+        "properties": {
+          "id": { "type": "string", "example": "aud_001" },
+          "storeId": { "type": "string", "example": "store_fashionista" },
+          "actorId": { "type": "string", "example": "usr_store_fashionista" },
+          "actorName": { "type": "string", "example": "Sarah Jenkins" },
+          "actorRole": { "type": "string", "enum": ["SYSTEM", "AI_ENGINE", "OWNER", "STAFF", "SHOPIFY_WEBHOOK"] },
+          "action": { "type": "string", "example": "EVALUATE_RECOMMENDATION" },
+          "resourceType": { "type": "string", "enum": ["RECOMMENDATION", "RULE", "CONFIG", "AUTH", "BILLING", "WEBHOOK"] },
+          "resourceId": { "type": "string", "example": "rec_001" },
+          "timestamp": { "type": "string", "format": "date-time" }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "summary": "Health and system diagnostic check",
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "System operational confirmation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string", "example": "production-ready" },
+                    "version": { "type": "string", "example": "1.0.0" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "summary": "Authenticate merchant owner or staff",
+        "tags": ["Auth"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["email"],
+                "properties": {
+                  "email": { "type": "string", "example": "owner@fashionistaboutique.com" },
+                  "password": { "type": "string", "example": "store_fashionista" },
+                  "storeId": { "type": "string", "example": "store_fashionista" }
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successful JWT authentication",
+              "content": {
+                "application/json": { "schema": { "$ref": "#/components/schemas/AuthResponse" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommendations": {
+      "get": {
+        "summary": "List active recommendations for store",
+        "tags": ["Recommendations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" }, "description": "Filter by status (Open, Snoozed, Completed)" },
+          { "name": "priority", "in": "query", "schema": { "type": "string" }, "description": "Filter by priority (CRITICAL, HIGH, MEDIUM)" }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of recommendations with rules fired and AI explanations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Recommendation" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/recommendations/{id}/evidence": {
+      "get": {
+        "summary": "Retrieve immutable evidence snapshot history",
+        "tags": ["Recommendations"],
+        "security": [{ "BearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Array of immutable evidence snapshots",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/EvidenceSnapshot" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/rules": {
+      "get": {
+        "summary": "List all business logic threshold rules",
+        "tags": ["Rule Engine"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/RuleVersion" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new custom business threshold rule",
+        "tags": ["Rule Engine"],
+        "security": [{ "BearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "description", "conditionField", "operator", "thresholdValue", "weight"],
+                "properties": {
+                  "name": { "type": "string", "example": "High LTV Cart Recovery" },
+                  "description": { "type": "string", "example": "Boost priority if customer totalSpent >= $1000" },
+                  "conditionField": { "type": "string", "example": "customer.totalSpent" },
+                  "operator": { "type": "string", "example": ">=" },
+                  "thresholdValue": { "type": "string", "example": "1000" },
+                  "weight": { "type": "integer", "example": 40 }
+                }
+              }
+            }
+          },
+          "responses": {
+            "201": {
+              "description": "Rule created successfully",
+              "content": {
+                "application/json": { "schema": { "$ref": "#/components/schemas/RuleVersion" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/audit-logs": {
+      "get": {
+        "summary": "Retrieve immutable append-only audit trail",
+        "tags": ["Audit Logs"],
+        "security": [{ "BearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Array of audit log entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/AuditLogEntry" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/webhooks/shopify/{topic}": {
+      "post": {
+        "summary": "Shopify HMAC-verified webhook endpoint",
+        "tags": ["Shopify Webhooks"],
+        "security": [{ "ShopifyHmac": [] }],
+        "parameters": [
+          { "name": "topic", "in": "path", "required": true, "schema": { "type": "string" }, "description": "Webhook topic (e.g., carts/update, orders/create, customers/redact)" }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "type": "object" } }
+          }
+        },
+        "responses": {
+          "200": { "description": "Webhook acknowledged and processed idempotently" },
+          "401": { "description": "HMAC SHA256 cryptographic signature mismatch" }
+        }
+      }
+    }
+  }
+}

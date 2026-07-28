@@ -1,0 +1,188 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ * PROFIT TOOL — AI Recommendation Engine Service
+ * Powered by Google Gemini (@google/genai)
+ * Implements strict explainability, scoring algorithms, and immutable evidence rules
+ */
+
+import { GoogleGenAI } from '@google/genai';
+import {
+  Cart,
+  Customer,
+  RuleExecution,
+  Recommendation,
+  EvidenceSnapshot,
+  RecommendationPriority
+} from '../../types.ts';
+import { recRepo, configRepo } from '../repositories/index.ts';
+
+// Initialize server-side Gemini client
+let genaiClient: GoogleGenAI | null = null;
+function getGenAI(): GoogleGenAI | null {
+  if (!genaiClient && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'MY_GEMINI_API_KEY') {
+    try {
+      genaiClient = new GoogleGenAI({
+        apiKey: process.env.GEMINI_API_KEY,
+        httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
+      });
+    } catch (e) {
+      console.warn('Could not initialize GenAI client:', e);
+    }
+  }
+  return genaiClient;
+}
+
+export class AIService {
+  /**
+   * Re-evaluates a cart and generates/updates an explainable recommendation.
+   * IMPERATIVE: Never overwrites previous evidence! Creates a NEW evidence snapshot.
+   */
+  async evaluateCartAndGenerateRecommendation(
+    cart: Cart,
+    customer: Customer | null,
+    rulesFired: RuleExecution[],
+    actor: string = 'AI_ENGINE'
+  ): Promise<Recommendation> {
+    const config = await configRepo.getByStoreId(cart.storeId);
+    const cartAgeHours = Math.max(1, Math.round((Date.now() - new Date(cart.createdAt).getTime()) / (3600 * 1000)));
+
+    // 1. Calculate algorithmic baseline score and priority from rules fired and cart value
+    let totalWeight = rulesFired.reduce((sum, r) => sum + r.weight, 0);
+    let baseScore = Math.min(99, Math.max(30, 40 + totalWeight + (cart.totalValue > 300 ? 20 : 0) + (customer?.isVIP ? 20 : 0)));
+
+    let priority: RecommendationPriority = 'Medium';
+    if (baseScore >= 85 || (cart.totalValue >= 500 && customer?.isVIP)) priority = 'Critical';
+    else if (baseScore >= 70 || cart.totalValue >= 250) priority = 'High';
+    else if (baseScore < 50) priority = 'Low';
+
+    // Determine suggested action type
+    let actionType: Recommendation['suggestedActionType'] = 'DISCOUNT_RECOVERY';
+    if (customer?.isVIP && cart.totalValue >= 400) actionType = 'VIP_PERSONAL_REACHOUT';
+    else if (cart.items.some(i => !i.inStock)) actionType = 'STOCK_REPLACEMENT';
+    else if (cart.items.length >= 3) actionType = 'BUNDLE_UPSELL';
+
+    // 2. Query Gemini for explainable reasoning (without hallucinating!)
+    let aiReason = '';
+    let aiActionSummary = '';
+    const ai = getGenAI();
+
+    if (ai) {
+      try {
+        const prompt = `You are the AI Decision Support Engine for a Shopify store named "${config.currencySymbol}".
+You MUST NOT hallucinate or invent any facts not present in the evidence below.
+Evaluate this abandoned cart and return a JSON response with exact explainability:
+EVIDENCE:
+- Cart ID: ${cart.id}
+- Total Value: ${config.currencySymbol}${cart.totalValue} (${cart.currency})
+- Cart Age: ${cartAgeHours} hours
+- Customer Name: ${customer ? `${customer.firstName} ${customer.lastName}` : 'Guest Customer'}
+- Customer VIP: ${customer?.isVIP ? 'YES (Top Tier)' : 'NO'}
+- Total Past Orders: ${customer?.totalOrders || 0}
+- Lifetime Spent: ${config.currencySymbol}${customer?.totalSpent || 0}
+- Cart Items: ${JSON.stringify(cart.items.map(i => `${i.quantity}x ${i.title} (${config.currencySymbol}${i.price}) - InStock: ${i.inStock}`))}
+- Rules Fired: ${JSON.stringify(rulesFired.map(r => `${r.ruleName}: ${r.explanation}`))}
+
+Respond in JSON ONLY:
+{
+  "title": "Short punchy recommendation title",
+  "reason": "Clear 2-sentence explanation of why this opportunity is valuable based strictly on the evidence",
+  "actionSummary": "Specific actionable next step for the merchant (e.g. email draft concept, stock alternative offer)",
+  "confidenceScore": number between 60 and 99
+}`;
+
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.0-flash',
+          contents: prompt,
+          config: {
+            responseMimeType: 'application/json',
+            temperature: 0.2 // Low temperature to prevent hallucinations
+          }
+        });
+
+        if (response.text) {
+          const parsed = JSON.parse(response.text.trim());
+          if (parsed.reason && parsed.actionSummary) {
+            aiReason = parsed.reason;
+            aiActionSummary = parsed.actionSummary;
+            if (parsed.confidenceScore && typeof parsed.confidenceScore === 'number') {
+              baseScore = Math.min(99, Math.max(50, parsed.confidenceScore));
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Gemini API call failed or timed out, using deterministic explainability engine:', err);
+      }
+    }
+
+    // Fallback deterministic explainability if GenAI is offline or key not provided
+    if (!aiReason) {
+      const custName = customer ? `${customer.firstName} ${customer.lastName}` : 'Guest Buyer';
+      const vipTag = customer?.isVIP ? `Top VIP customer ($${customer.totalSpent.toFixed(2)} LTV)` : `Customer with ${customer?.totalOrders || 0} past orders`;
+      aiReason = `${vipTag} abandoned a cart valued at ${config.currencySymbol}${cart.totalValue.toFixed(2)} (${cart.items.length} items) ${cartAgeHours} hours ago. Fired ${rulesFired.length} business rules including "${rulesFired[0]?.ruleName || 'Store Threshold'}".`;
+      
+      if (actionType === 'VIP_PERSONAL_REACHOUT') {
+        aiActionSummary = `Send personalized VIP concierge email/SMS thanking them for their loyalty and offering priority dispatch on the ${cart.items[0]?.title || 'cart items'}.`;
+      } else if (actionType === 'STOCK_REPLACEMENT') {
+        aiActionSummary = `Send automated alert proposing instant substitution for the out-of-stock item with complimentary express shipping.`;
+      } else {
+        aiActionSummary = `Trigger automated recovery campaign offering a time-sensitive 10% recovery discount code with 24-hour expiration.`;
+      }
+    }
+
+    const title = `${priority === 'Critical' ? '🚨 ' : priority === 'High' ? '⚡ ' : '💼 '}${actionType === 'VIP_PERSONAL_REACHOUT' ? 'VIP Reachout' : actionType === 'STOCK_REPLACEMENT' ? 'Stock Replacement' : 'Discount Recovery'}: ${customer ? `${customer.firstName} ${customer.lastName}` : 'Cart Recovery'} (${config.currencySymbol}${cart.totalValue.toFixed(2)})`;
+
+    // 3. Create IMMUTABLE Evidence Snapshot
+    const snapshotId = `snap_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const existingRec = await recRepo.getActiveByCartId(cart.id);
+    const nextVersion = existingRec ? existingRec.evidenceHistory.length + 1 : 1;
+
+    const snapshot: EvidenceSnapshot = {
+      snapshotId,
+      recommendationId: existingRec ? existingRec.id : `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      cartId: cart.id,
+      evaluatedAt: new Date().toISOString(),
+      cartValueAtEval: cart.totalValue,
+      customerTotalSpentAtEval: customer?.totalSpent || 0,
+      customerTotalOrdersAtEval: customer?.totalOrders || 0,
+      cartAgeHours,
+      itemsSnapshot: [...cart.items],
+      rulesFired: [...rulesFired],
+      rawAiReasoning: aiReason,
+      version: nextVersion
+    };
+
+    await recRepo.saveEvidence(snapshot);
+
+    // 4. Construct or update Recommendation
+    const recId = existingRec ? existingRec.id : snapshot.recommendationId;
+    const recommendation: Recommendation = {
+      id: recId,
+      storeId: cart.storeId,
+      cartId: cart.id,
+      customerId: customer?.id,
+      customerEmail: cart.customerEmail || customer?.email,
+      customerName: cart.customerName || (customer ? `${customer.firstName} ${customer.lastName}` : 'Guest'),
+      title,
+      reason: aiReason,
+      actionSummary: aiActionSummary,
+      suggestedActionType: actionType,
+      priority,
+      status: existingRec ? existingRec.status : 'Open',
+      confidenceScore: baseScore,
+      opportunityValue: cart.totalValue,
+      currency: cart.currency,
+      createdAt: existingRec ? existingRec.createdAt : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      currentEvidenceSnapshotId: snapshotId,
+      evidenceHistory: existingRec ? [snapshot, ...existingRec.evidenceHistory] : [snapshot],
+      rulesFiredCount: rulesFired.length,
+      auditHistory: existingRec ? existingRec.auditHistory : []
+    };
+
+    const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
+    return recRepo.save(recommendation, actor, actionName);
+  }
+}
+
+export const aiService = new AIService();

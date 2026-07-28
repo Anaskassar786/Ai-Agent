@@ -1,0 +1,6 @@
+{
+  "name": "Profit Tool",
+  "description": "AI Decision Support System for Shopify merchants to identify high-value sales opportunities from abandoned carts and customer behavior with explainable recommendations and immutable evidence trails.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

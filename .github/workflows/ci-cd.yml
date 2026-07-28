@@ -1,0 +1,79 @@
+name: PROFIT TOOL — Enterprise CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main", "staging" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test-and-build:
+    name: 🧪 Build, Lint & Automated Test Suite
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [20.x, 22.x]
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Verify Type Safety (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Execute Enterprise Test Suite
+        run: npm test --if-present
+        env:
+          NODE_ENV: test
+          JWT_SECRET: ci_test_secret_key_123
+          SHOPIFY_API_SECRET: ci_test_shopify_secret_123
+
+      - name: Build Full-Stack Application Artifacts
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Upload Production Artifacts
+        if: github.ref == 'refs/heads/main' && matrix.node-version == '22.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: profit-tool-dist
+          path: |
+            dist/
+            package.json
+            Dockerfile
+            docker-compose.yml
+
+  docker-verify:
+    name: 🐳 Docker Container Build & Security Verification
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        run: docker build -t profit-tool:ci-latest .
+
+      - name: Verify Container Launch & Ingress
+        run: |
+          docker run -d --name test-container -p 3000:3000 -e NODE_ENV=production profit-tool:ci-latest
+          sleep 10
+          curl -f http://localhost:3000/api/health || exit 1
+          docker logs test-container
+          docker stop test-container
