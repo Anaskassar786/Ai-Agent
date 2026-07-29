@@ -188,9 +188,12 @@ export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
                   <span className="text-slate-400 font-normal mr-1.5">Action Plan:</span>
                   {rec.actionSummary}
                 </div>
-                <span className="text-emerald-400 font-bold underline text-[11px] shrink-0 ml-4">
+              <button
+               onClick={() => onInspectEvidence(rec)}
+               className="text-emerald-400 font-bold underline text-[11px] shrink-0 ml-4"
+                           >
                   Inspect Evidence →
-                </span>
+                  </button>
               </div>
             </div>
 
