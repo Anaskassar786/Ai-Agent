@@ -233,18 +233,6 @@ export function App() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white space-y-4 font-sans">
-        <div className="w-12 h-12 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
-        <div className="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-          PROFIT<span className="text-emerald-400">TOOL</span>
-        </div>
-        <p className="text-xs text-slate-400 font-mono">Initializing Shopify AI Decision Support Engine...</p>
-      </div>
-    );
-  }
-
   const activeRecsCount = recommendations.filter(r => r.status !== 'Completed' && r.status !== 'Archived').length;
   const unreadNotifsCount = notifications.filter(n => !n.isRead).length;
 

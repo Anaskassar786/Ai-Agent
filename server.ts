@@ -175,20 +175,6 @@ async function startServer() {
     res.sendFile(filePath);
   });
 
-  app.get(['/src/main.tsx', '/api/source/src/main.tsx', '/main.tsx'], (req, res) => {
-    const filePath = path.join(process.cwd(), 'src', 'main.tsx');
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="main.tsx"');
-    res.sendFile(filePath);
-  });
-
-  app.get(['/src/App.tsx', '/api/source/src/App.tsx', '/App.tsx'], (req, res) => {
-    const filePath = path.join(process.cwd(), 'src', 'App.tsx');
-    res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Content-Disposition', 'attachment; filename="App.tsx"');
-    res.sendFile(filePath);
-  });
-
   app.get(['/src/server/db/index.ts', '/api/source/src/server/db/index.ts', '/db.ts', '/src/server/db/schema.ts', '/api/source/src/server/db/schema.ts', '/schema.ts'], (req, res) => {
     const isSchema = req.path.includes('schema');
     const filePath = path.join(process.cwd(), 'src', 'server', 'db', isSchema ? 'schema.ts' : 'index.ts');

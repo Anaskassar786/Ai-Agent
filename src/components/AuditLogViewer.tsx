@@ -17,8 +17,7 @@ import {
   Cpu
 } from 'lucide-react';
 import { AuditLog, Store } from '../types.ts';
-import { POSTGRESQL_DDL_SCHEMA } from '../server/db/schema.ts';
-
+const POSTGRESQL_DDL_SCHEMA = "TEST SCHEMA";
 interface AuditLogViewerProps {
   logs: AuditLog[];
   activeStore: Store | null;
