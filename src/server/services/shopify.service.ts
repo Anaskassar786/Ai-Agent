@@ -13,7 +13,8 @@ import { Cart, Customer, Store } from '../../types.ts';
 
 const SHOPIFY_API_SECRET = process.env.SHOPIFY_API_SECRET || 'shpss_sample_shopify_api_secret_49201920';
 const APP_URL = process.env.APP_URL || 'http://localhost:3000';
-
+const SHOPIFY_API_KEY = process.env.SHOPIFY_API_KEY || '';
+const SHOPIFY_API_VERSION = '2026-07';
 export class ShopifyService {
   /**
    * Verifies Shopify Webhook HMAC SHA256 signature

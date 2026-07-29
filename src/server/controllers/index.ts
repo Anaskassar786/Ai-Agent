@@ -432,7 +432,7 @@ export class NotificationController {
   }
 }
 
-export class BillingController {
+	export class BillingController {
   async listPlans(req: Request, res: Response): Promise<void> {
     try {
       const storeId = (req as any).user?.storeId || 'store_fashionista';
@@ -460,11 +460,28 @@ export class BillingController {
   }
 }
 
-export class ShopifyController {
-  async install(req: Request, res: Response): Promise<void> {
-    const shop = req.query.shop as string || 'fashionista-boutique.myshopify.com';
-    // Redirect to simulated callback
-    res.redirect(`/api/shopify/callback?shop=${shop}&code=sim_oauth_code_9912`);
+export class ShopifyController { 
+        async install(req: Request, res: Response): Promise<void> {
+    const shop = req.query.shop as string;
+
+     if (!shop) {
+  res.status(400).send('Missing shop parameter');
+  return;
+}
+
+const apiKey = process.env.SHOPIFY_API_KEY;
+
+const scopes = process.env.SHOPIFY_SCOPES ||
+  'read_orders,read_customers,read_products,read_checkouts,write_checkouts';
+
+const redirectUri = `${process.env.APP_URL}/api/shopify/callback`;
+    const installUrl =
+      `https://${shop}/admin/oauth/authorize` +
+      `?client_id=${apiKey}` +
+      `&scope=${scopes}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+    res.redirect(installUrl);
   }
 
   async callback(req: Request, res: Response): Promise<void> {
