@@ -277,16 +277,16 @@ export function App() {
           )}
 
           {activeTab === 'recommendations' && (
-            <RecommendationsView
-              recommendations={recommendations}
-              activeStore={activeStore}
-              onSelectRecommendation={setSelectedRecommendation}
-              onUpdateStatus={handleUpdateRecommendationStatus}
-              onRefresh={fetchAllData}
-            />
-          )}
+  <RecommendationsView
+    recommendations={recommendations}
+    activeStore={activeStore}
+    onSelectRecommendation={setSelectedRecommendation}
+    onUpdateStatus={handleUpdateRecommendationStatus}
+    onRefresh={fetchAllData}
+  />
+)}
 
-          {activeTab === 'rules' && (
+         {activeTab === 'rules' && (
             <RuleEngineStudio
               rules={rules}
               activeStore={activeStore}

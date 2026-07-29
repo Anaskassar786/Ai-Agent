@@ -26,13 +26,15 @@ interface RecommendationsViewProps {
   activeStore: Store | null;
   onSelectRecommendation: (rec: Recommendation) => void;
   onUpdateStatus: (id: string, status: RecommendationStatus, snoozedUntil?: string) => Promise<void>;
-  onRefresh: () => void;
+  onRefresh: () => void;  
+  onInspectEvidence: (rec: Recommendation) => void;
 }
 
 export const RecommendationsView: React.FC<RecommendationsViewProps> = ({
   recommendations,
   activeStore,
-  onSelectRecommendation,
+  onSelectRecommendation,  
+  onInspectEvidence,
   onUpdateStatus,
   onRefresh
 }) => {
