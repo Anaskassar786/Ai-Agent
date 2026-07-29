@@ -172,7 +172,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Merchant Account info */}
           <div className="flex items-center space-x-3 pl-3 border-l border-slate-800">
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow">
-              {activeStore?.storeName.substring(0, 2).toUpperCase() || 'FB'}
+            {activeStore?.storeName?.substring(0, 2).toUpperCase() || 'FB'}
             </div>
             <div className="hidden xl:block text-left">
               <div className="text-xs font-semibold text-slate-200">Merchant Admin</div>
