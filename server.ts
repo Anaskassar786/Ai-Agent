@@ -5,6 +5,7 @@
  * Runs on port 3000 (0.0.0.0 ingress) with Vite middleware
  */
 
+import 'dotenv/config';
 import express, { Request, Response, NextFunction } from 'express';
 import path from 'path';
 import fs from 'fs';
