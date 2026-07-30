@@ -38,14 +38,23 @@ export class AIService {
    * Re-evaluates a cart and generates/updates an explainable recommendation.
    * IMPERATIVE: Never overwrites previous evidence! Creates a NEW evidence snapshot.
    */
-  async evaluateCartAndGenerateRecommendation(
-    cart: Cart,
-    customer: Customer | null,
-    rulesFired: RuleExecution[],
-    actor: string = 'AI_ENGINE'
-  ): Promise<Recommendation> {
-    const config = await configRepo.getByStoreId(cart.storeId);
-    const cartAgeHours = Math.max(1, Math.round((Date.now() - new Date(cart.createdAt).getTime()) / (3600 * 1000)));
+  async  evaluateCartAndGenerateRecommendation(
+  cart: Cart,
+  customer: Customer | null,
+  rulesFired: RuleExecution[],
+  actor: string = 'AI_ENGINE'
+): Promise<Recommendation> {
+
+  console.log("🚀 AI SERVICE STARTED");
+  console.log("Cart ID:", cart.id);
+  console.log("Customer:", customer?.email);
+  console.log("Rules Fired:", rulesFired.length);
+
+  const config = await configRepo.getByStoreId(cart.storeId);
+  const cartAgeHours = Math.max(
+  1,
+  Math.round((Date.now() - new Date(cart.abandonedAt).getTime()) / (1000 * 60 * 60))
+ );
 
     // 1. Calculate algorithmic baseline score and priority from rules fired and cart value
     let totalWeight = rulesFired.reduce((sum, r) => sum + r.weight, 0);
