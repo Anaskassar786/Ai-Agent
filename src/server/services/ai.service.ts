@@ -34,6 +34,41 @@ function getGenAI(): GoogleGenAI | null {
 }
 
 export class AIService {
+  private calculateConfidenceScore(
+  cart: Cart,
+  customer: Customer | null,
+  rulesFired: RuleExecution[]
+): number {
+  let score = 40;
+
+  // Rule Engine contribution
+  score += rulesFired.reduce((sum, rule) => sum + rule.weight, 0);
+
+  // Cart value
+  if (cart.totalValue >= 500) score += 20;
+  else if (cart.totalValue >= 250) score += 10;
+
+  // VIP Customer
+  if (customer?.isVIP) score += 20;
+
+  // Returning customer
+  if ((customer?.totalOrders ?? 0) >= 3) score += 10;
+
+  // Cart age
+  const cartAgeHours = Math.max(
+    1,
+    Math.round(
+      (Date.now() - new Date(cart.abandonedAt).getTime()) /
+      (1000 * 60 * 60)
+    )
+  );
+
+  if (cartAgeHours >= 2) score += 5;
+  if (cartAgeHours >= 6) score += 5;
+
+  // Keep between 30–99
+  return Math.min(99, Math.max(30, score));
+}
   /**
    * Re-evaluates a cart and generates/updates an explainable recommendation.
    * IMPERATIVE: Never overwrites previous evidence! Creates a NEW evidence snapshot.
@@ -58,7 +93,11 @@ export class AIService {
 
     // 1. Calculate algorithmic baseline score and priority from rules fired and cart value
     let totalWeight = rulesFired.reduce((sum, r) => sum + r.weight, 0);
-    let baseScore = Math.min(99, Math.max(30, 40 + totalWeight + (cart.totalValue > 300 ? 20 : 0) + (customer?.isVIP ? 20 : 0)));
+    let baseScore = this.calculateConfidenceScore(
+    cart,
+    customer,
+    rulesFired
+  );
 
     let priority: RecommendationPriority = 'Medium';
     if (baseScore >= 85 || (cart.totalValue >= 500 && customer?.isVIP)) priority = 'Critical';
@@ -110,23 +149,26 @@ Respond in JSON ONLY:
           }
         });
 
-        if (response.text) {
-        console.log("✅ Gemini API response received successfully");
-        console.log(response.text);
-          const parsed = JSON.parse(response.text.trim());
-          if (parsed.reason && parsed.actionSummary) {
-            aiReason = parsed.reason;
-            aiActionSummary = parsed.actionSummary;
-            if (parsed.confidenceScore && typeof parsed.confidenceScore === 'number') {
-              baseScore = Math.min(99, Math.max(50, parsed.confidenceScore));
-            }
-          }
+              if (response.text) {
+      console.log("✅ Gemini API response received successfully");
+      console.log(response.text);
+
+      try {
+        const parsed = JSON.parse(response.text.trim());
+
+        if (parsed.reason && parsed.actionSummary) {
+          aiReason = parsed.reason;
+          aiActionSummary = parsed.actionSummary;
         }
+        // Gemini confidence score is ignored intentionally as per blueprint
       } catch (err) {
-        console.error("❌ Gemini API ERROR:", err);
-        console.warn('Gemini API call failed or timed out, using deterministic explainability engine:', err);
+          console.error("❌ Gemini Parse Error:", err);
+        }
       }
+    } catch (err) {
+      console.error("❌ Gemini API Error:", err);
     }
+  }
 
     // Fallback deterministic explainability if GenAI is offline or key not provided
     if (!aiReason) {
@@ -193,9 +235,9 @@ Respond in JSON ONLY:
       auditHistory: existingRec ? existingRec.auditHistory : []
     };
 
-    const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
-    return recRepo.save(recommendation, actor, actionName);
-  }
+          const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
+      return recRepo.save(recommendation, actor, actionName);
+    }
 }
 
 export const aiService = new AIService();
