@@ -6,7 +6,7 @@
 import axios from 'axios';
 import { Store } from '../../types.ts';
 
-const SHOPIFY_API_VERSION = '2026-07';
+const SHOPIFY_API_VERSION = '2026-04';
 
 export class ShopifyApiService {
 
