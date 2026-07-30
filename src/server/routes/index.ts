@@ -4,6 +4,7 @@
  */
 import { Router } from 'express';
 import authRoutes from './auth.routes.ts';
+import shopifyRoutes from './shopify.routes.ts';
 import storeRoutes from './store.routes.ts';
 import recRoutes from './recommendations.routes.ts';
 import ruleRoutes from './rules.routes.ts';
@@ -18,6 +19,7 @@ const apiRouter = Router();
 apiRouter.use('/auth', authRoutes);
 apiRouter.use('/stores', storeRoutes);
 apiRouter.use('/recommendations', recRoutes);
+apiRouter.use('/shopify', shopifyRoutes);
 apiRouter.use('/rules', ruleRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/audit-logs', auditRoutes);
@@ -29,6 +31,7 @@ export default apiRouter;
 export {
   authRoutes,
   storeRoutes,
+  shopifyRoutes,
   recRoutes,
   ruleRoutes,
   analyticsRoutes,
