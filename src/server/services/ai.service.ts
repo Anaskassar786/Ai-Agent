@@ -101,6 +101,8 @@ Respond in JSON ONLY:
         });
 
         if (response.text) {
+        console.log("✅ Gemini API response received successfully");
+        console.log(response.text);
           const parsed = JSON.parse(response.text.trim());
           if (parsed.reason && parsed.actionSummary) {
             aiReason = parsed.reason;
@@ -111,6 +113,7 @@ Respond in JSON ONLY:
           }
         }
       } catch (err) {
+        console.error("❌ Gemini API ERROR:", err);
         console.warn('Gemini API call failed or timed out, using deterministic explainability engine:', err);
       }
     }
