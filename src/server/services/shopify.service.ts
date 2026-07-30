@@ -59,6 +59,7 @@ export class ShopifyService {
         .replace('.myshopify.com', '')
         .replace(/-/g, ' ')
         .replace(/\b\w/g, l => l.toUpperCase()),
+      ownerName: 'Store Owner',
       ownerEmail: `admin@${shopDomain.replace('.myshopify.com', '.com')}`,
       currency: 'USD',
       installedAt: new Date().toISOString(),
