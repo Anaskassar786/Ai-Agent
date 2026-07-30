@@ -6,6 +6,7 @@
  */
 
 import crypto from 'crypto';
+import axios from 'axios';
 import { storeRepo, cartRepo, customerRepo, notifRepo, billingRepo } from '../repositories/index.ts';
 import { aiService } from './ai.service.ts';
 import { ruleService } from './rule.service.ts';
