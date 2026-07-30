@@ -38,7 +38,8 @@ export class AIService {
    * Re-evaluates a cart and generates/updates an explainable recommendation.
    * IMPERATIVE: Never overwrites previous evidence! Creates a NEW evidence snapshot.
    */
-  async  evaluateCartAndGenerateRecommendation(
+  async 
+  evaluateCartAndGenerateRecommendation(
   cart: Cart,
   customer: Customer | null,
   rulesFired: RuleExecution[],
@@ -74,8 +75,7 @@ export class AIService {
     // 2. Query Gemini for explainable reasoning (without hallucinating!)
     let aiReason = '';
     let aiActionSummary = '';
-    const ai = getGenAI();console.log("Gemini Client:", ai ? "INITIALIZED" : "NULL");
-    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+    const ai = getGenAI();
 
     if (ai) {
       try {
@@ -100,7 +100,7 @@ Respond in JSON ONLY:
   "actionSummary": "Specific actionable next step for the merchant (e.g. email draft concept, stock alternative offer)",
   "confidenceScore": number between 60 and 99
 }`;
-        console.log("Calling Gemini API...");
+
         const response = await ai.models.generateContent({
           model: 'gemini-2.0-flash',
           contents: prompt,

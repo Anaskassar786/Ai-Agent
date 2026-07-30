@@ -22,20 +22,20 @@ import {
 
 export class StoreRepository {
   async getAll(): Promise<Store[]> {
-    return db.getStores();
-  }
+  return await db.getStores();
+}
 
-  async getById(id: string): Promise<Store | null> {
-    return db.getStoreById(id) || null;
-  }
+async getById(id: string): Promise<Store | null> {
+  return (await db.getStoreById(id)) || null;
+}
 
-  async getByDomain(domain: string): Promise<Store | null> {
-    return db.getStoreByDomain(domain) || null;
-  }
+async getByDomain(domain: string): Promise<Store | null> {
+  return (await db.getStoreByDomain(domain)) || null;
+}
 
-  async save(store: Store): Promise<Store> {
-    return db.saveStore(store);
-  }
+async save(store: Store): Promise<Store> {
+  return await db.saveStore(store);
+}
 }
 
 export class ConfigRepository {

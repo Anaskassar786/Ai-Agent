@@ -20,6 +20,7 @@ import {
   BillingPlan,
   RuleExecution
 } from '../../types.ts';
+import { pool } from './client.ts';
 
 class DatabaseEngine {
   private stores: Map<string, Store> = new Map();
@@ -34,10 +35,12 @@ class DatabaseEngine {
   private notifications: Map<string, NotificationAlert> = new Map();
   private billingPlans: Map<string, BillingPlan> = new Map();
 
-  constructor() {
-    this.initBillingPlans();
-    this.seedEnterpriseData();
-  }
+constructor() {
+  this.initBillingPlans();
+  this.seedEnterpriseData().catch((err) => {
+    console.error("❌ Seed failed:", err);
+  });
+}
 
   private initBillingPlans() {
     this.billingPlans.set('Starter', {
@@ -69,7 +72,7 @@ class DatabaseEngine {
     });
   }
 
-  private seedEnterpriseData() {
+  private async seedEnterpriseData() {
     const now = new Date();
     const twoHoursAgo = new Date(now.getTime() - 2 * 3600 * 1000).toISOString();
     const fourHoursAgo = new Date(now.getTime() - 4 * 3600 * 1000).toISOString();
@@ -114,7 +117,40 @@ class DatabaseEngine {
     this.stores.set(store1.id, store1);
     this.stores.set(store2.id, store2);
     this.stores.set(store3.id, store3);
+    console.log("🌱 Starting PostgreSQL seed...");
+    
+    await pool.query(
+  `
+    INSERT INTO stores (
+    id,
+    shopify_domain,
+    store_name,
+    owner_email,
+    owner_name,
+    currency,
+    installed_at,
+    is_active,
+    access_token,
+    active_plan
+  )
+    VALUES
+    ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10),
+    ($11,$12,$13,$14,$15,$16,$17,$18,$19,$20),
+    ($21,$22,$23,$24,$25,$26,$27,$28,$29,$30)
+  ON CONFLICT (id) DO NOTHING
+  `,
+  [
+    store1.id, store1.shopifyDomain, store1.storeName, store1.ownerEmail, 'Sarah Johnson', store1.currency, store1.installedAt, store1.isActive, store1.accessToken, store1.activePlan,
+    store2.id, store2.shopifyDomain, store2.storeName, store2.ownerEmail, 'David Smith',   store2.currency, store2.installedAt, store2.isActive, store2.accessToken, store2.activePlan,
+    store3.id, store3.shopifyDomain, store3.storeName, store3.ownerEmail, 'Emma Wilson',   store3.currency, store3.installedAt, store3.isActive, store3.accessToken, store3.activePlan
+  ]
+).then(() => {
+  console.log("✅ Demo stores inserted into PostgreSQL");
+}).catch((err) => {
+  console.error("❌ Seed insert failed:", err);
+});
 
+  console.log("✅ PostgreSQL seed query completed");
     // 2. Store Configs
     this.configs.set(store1.id, {
       storeId: store1.id,
@@ -540,29 +576,123 @@ class DatabaseEngine {
   // ==========================================
   // STORE METHODS
   // ==========================================
-  public getStores(): Store[] {
-    return Array.from(this.stores.values());
+  public async getStores(): Promise<Store[]> {
+  const result = await pool.query(
+    `SELECT * FROM stores ORDER BY installed_at DESC`
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    shopifyDomain: row.shopify_domain,
+    storeName: row.store_name,
+    ownerEmail: row.owner_email,
+    currency: row.currency,
+    installedAt: row.installed_at.toISOString(),
+    isActive: row.is_active,
+    accessToken: row.access_token,
+    activePlan: row.active_plan
+  }));
+}
+
+  public async getStoreById(id: string): Promise<Store | undefined> {
+  const result = await pool.query(
+    `SELECT * FROM stores WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+
+  if (result.rows.length === 0) {
+    return undefined;
   }
 
-  public getStoreById(id: string): Store | undefined {
-    return this.stores.get(id);
+  const row = result.rows[0];
+
+  return {
+    id: row.id,
+    shopifyDomain: row.shopify_domain,
+    storeName: row.store_name,
+    ownerEmail: row.owner_email,
+    currency: row.currency,
+    installedAt: row.installed_at.toISOString(),
+    isActive: row.is_active,
+    accessToken: row.access_token,
+    activePlan: row.active_plan
+  };
+}
+
+  public async getStoreByDomain(domain: string): Promise<Store | undefined> {
+  const result = await pool.query(
+    `SELECT * FROM stores WHERE shopify_domain = $1 LIMIT 1`,
+    [domain]
+  );
+
+  if (result.rows.length === 0) {
+    return undefined;
   }
 
-  public getStoreByDomain(domain: string): Store | undefined {
-    return Array.from(this.stores.values()).find(s => s.shopifyDomain === domain);
-  }
+  const row = result.rows[0];
 
-  public saveStore(store: Store): Store {
-    this.stores.set(store.id, store);
-    this.logAudit({
-      storeId: store.id,
-      entityId: store.id,
-      entityType: 'AUTH',
-      action: 'STORE_SAVED_OR_UPDATED',
-      actor: 'MERCHANT_ADMIN'
-    });
-    return store;
-  }
+  return {
+    id: row.id,
+    shopifyDomain: row.shopify_domain,
+    storeName: row.store_name,
+    ownerEmail: row.owner_email,
+    currency: row.currency,
+    installedAt: row.installed_at.toISOString(),
+    isActive: row.is_active,
+    accessToken: row.access_token,
+    activePlan: row.active_plan
+  };
+}
+
+  public async saveStore(store: Store): Promise<Store> {
+  await pool.query(
+    `
+    INSERT INTO stores (
+      id,
+      shopify_domain,
+      store_name,
+      owner_email,
+      currency,
+      installed_at,
+      is_active,
+      access_token,
+      active_plan
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    ON CONFLICT (id)
+    DO UPDATE SET
+      shopify_domain = EXCLUDED.shopify_domain,
+      store_name = EXCLUDED.store_name,
+      owner_email = EXCLUDED.owner_email,
+      currency = EXCLUDED.currency,
+      installed_at = EXCLUDED.installed_at,
+      is_active = EXCLUDED.is_active,
+      access_token = EXCLUDED.access_token,
+      active_plan = EXCLUDED.active_plan
+    `,
+    [
+      store.id,
+      store.shopifyDomain,
+      store.storeName,
+      store.ownerEmail,
+      store.currency,
+      store.installedAt,
+      store.isActive,
+      store.accessToken ?? null,
+      store.activePlan
+    ]
+  );
+
+  this.logAudit({
+    storeId: store.id,
+    entityId: store.id,
+    entityType: 'AUTH',
+    action: 'STORE_SAVED_OR_UPDATED',
+    actor: 'MERCHANT_ADMIN'
+  });
+
+  return store;
+}
 
   // ==========================================
   // STORE CONFIG METHODS
@@ -826,12 +956,11 @@ class DatabaseEngine {
     return Array.from(this.billingPlans.values());
   }
 
-  public switchPlan(storeId: string, planId: 'Starter' | 'Growth' | 'Scale'): Store {
-    const store = this.getStoreById(storeId);
+  public async switchPlan(storeId: string, planId: 'Starter' | 'Growth' | 'Scale'): Promise<Store> {
+    const store = await this.getStoreById(storeId);
     if (!store) throw new Error('Store not found');
     const oldPlan = store.activePlan;
     store.activePlan = planId;
-    this.stores.set(storeId, store);
     this.logAudit({
       storeId,
       entityId: storeId,

@@ -486,8 +486,12 @@ const redirectUri = `${process.env.APP_URL}/api/shopify/callback`;
 
   async callback(req: Request, res: Response): Promise<void> {
     try {
-      const shop = req.query.shop as string || 'fashionista-boutique.myshopify.com';
-      const code = req.query.code as string || 'sample';
+      const shop = req.query.shop as string;
+      const code = req.query.code as string;
+
+      if (!shop || !code) {
+      throw new Error('Missing Shopify OAuth parameters');
+  }
       const store = await shopifyService.handleOAuthCallback(shop, code);
       // Redirect to dashboard with auto-login token
       res.redirect(`/?shop=${shop}&installed=true&storeId=${store.id}`);
