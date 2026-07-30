@@ -37,25 +37,41 @@ export class ShopifyService {
    * Handles Shopify OAuth Callback simulation / production
    */
   async handleOAuthCallback(shopDomain: string, code: string): Promise<Store> {
-    let store = await storeRepo.getByDomain(shopDomain);
-    if (!store) {
-      store = {
-        id: `store_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        shopifyDomain: shopDomain,
-        storeName: shopDomain.replace('.myshopify.com', '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        ownerEmail: `admin@${shopDomain.replace('.myshopify.com', '.com')}`,
-        currency: 'USD',
-        installedAt: new Date().toISOString(),
-        isActive: true,
-        accessToken: `shpca_token_${code || 'sample'}`,
-        activePlan: 'Starter'
-      };
-    } else {
-      store.isActive = true;
-      store.accessToken = `shpca_token_${code || 'sample'}`;
+  const response = await axios.post(
+    `https://${shopDomain}/admin/oauth/access_token`,
+    {
+      client_id: process.env.SHOPIFY_API_KEY,
+      client_secret: process.env.SHOPIFY_API_SECRET,
+      code,
     }
-    return storeRepo.save(store);
+  );
+
+  const accessToken = response.data.access_token;
+
+  let store = await storeRepo.getByDomain(shopDomain);
+
+  if (!store) {
+    store = {
+      id: `store_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      shopifyDomain: shopDomain,
+      storeName: shopDomain
+        .replace('.myshopify.com', '')
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase()),
+      ownerEmail: `admin@${shopDomain.replace('.myshopify.com', '.com')}`,
+      currency: 'USD',
+      installedAt: new Date().toISOString(),
+      isActive: true,
+      accessToken,
+      activePlan: 'Starter'
+    };
+  } else {
+    store.isActive = true;
+    store.accessToken = accessToken;
   }
+
+  return storeRepo.save(store);
+}
 
   /**
    * Processes incoming Shopify Webhooks with Idempotency & AI evaluation
