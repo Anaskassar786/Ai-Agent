@@ -658,12 +658,13 @@ constructor() {
       access_token,
       active_plan
     )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
     ON CONFLICT (id)
     DO UPDATE SET
       shopify_domain = EXCLUDED.shopify_domain,
       store_name = EXCLUDED.store_name,
       owner_email = EXCLUDED.owner_email,
+      owner_name = EXCLUDED.owner_name,      
       currency = EXCLUDED.currency,
       installed_at = EXCLUDED.installed_at,
       is_active = EXCLUDED.is_active,
@@ -675,6 +676,7 @@ constructor() {
       store.shopifyDomain,
       store.storeName,
       store.ownerEmail,
+      store.ownerName,
       store.currency,
       store.installedAt,
       store.isActive,
