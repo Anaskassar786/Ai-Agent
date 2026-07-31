@@ -16,6 +16,7 @@ import {
   RecommendationPriority
 } from '../../types.ts';
 import { recRepo, configRepo } from '../repositories/index.ts';
+import { localAIEngine } from './local-ai-engine.service.ts';
 
 // Initialize server-side Gemini client
 let genaiClient: GoogleGenAI | null = null;
@@ -93,7 +94,7 @@ export class AIService {
 
     // 1. Calculate algorithmic baseline score and priority from rules fired and cart value
     let totalWeight = rulesFired.reduce((sum, r) => sum + r.weight, 0);
-    let baseScore = this.calculateConfidenceScore(
+    let baseScore = localAIEngine.calculateConfidenceScore(
     cart,
     customer,
     rulesFired
