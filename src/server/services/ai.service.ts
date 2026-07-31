@@ -103,11 +103,7 @@ export class AIService {
 
     const priority = recommendationBuilder.buildPriority(baseScore);
 
-    // Determine suggested action type
-    let actionType: Recommendation['suggestedActionType'] = 'DISCOUNT_RECOVERY';
-    if (customer?.isVIP && cart.totalValue >= 400) actionType = 'VIP_PERSONAL_REACHOUT';
-    else if (cart.items.some(i => !i.inStock)) actionType = 'STOCK_REPLACEMENT';
-    else if (cart.items.length >= 3) actionType = 'BUNDLE_UPSELL';
+   const actionType = recommendationBuilder.buildActionType(cart, customer);
 
     // 2. Query Gemini for explainable reasoning (without hallucinating!)
     let aiReason = '';
