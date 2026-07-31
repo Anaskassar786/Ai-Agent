@@ -43,10 +43,11 @@ export class ShopifyService {
   const response = await axios.post(
     `https://${shopDomain}/admin/oauth/access_token`,
     {
-      client_id: process.env.SHOPIFY_API_KEY,
-      client_secret: process.env.SHOPIFY_API_SECRET,
-      code,
-    }
+  client_id: process.env.SHOPIFY_API_KEY,
+  client_secret: process.env.SHOPIFY_API_SECRET,
+  code,
+  redirect_uri: `${process.env.APP_URL}/api/shopify/callback`,
+}
   );
 
   const accessToken = response.data.access_token;
