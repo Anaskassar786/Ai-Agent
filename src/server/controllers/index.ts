@@ -485,6 +485,8 @@ const redirectUri = `${process.env.APP_URL}/api/shopify/callback`;
   }
 
   async callback(req: Request, res: Response): Promise<void> {
+  console.log('SHOPIFY CALLBACK HIT', req.query);
+  
     try {
       const shop = req.query.shop as string;
       const code = req.query.code as string;
