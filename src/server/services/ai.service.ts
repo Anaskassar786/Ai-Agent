@@ -17,6 +17,7 @@ import {
 } from '../../types.ts';
 import { recRepo, configRepo } from '../repositories/index.ts';
 import { localAIEngine } from './local-ai-engine.service.ts';
+import { recommendationBuilder } from './recommendation-builder.service.ts';
 
 // Initialize server-side Gemini client
 let genaiClient: GoogleGenAI | null = null;
@@ -100,10 +101,7 @@ export class AIService {
     rulesFired
   );
 
-    let priority: RecommendationPriority = 'Medium';
-    if (baseScore >= 85 || (cart.totalValue >= 500 && customer?.isVIP)) priority = 'Critical';
-    else if (baseScore >= 70 || cart.totalValue >= 250) priority = 'High';
-    else if (baseScore < 50) priority = 'Low';
+    const priority = recommendationBuilder.buildPriority(baseScore);
 
     // Determine suggested action type
     let actionType: Recommendation['suggestedActionType'] = 'DISCOUNT_RECOVERY';
