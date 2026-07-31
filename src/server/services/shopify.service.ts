@@ -38,6 +38,8 @@ export class ShopifyService {
    * Handles Shopify OAuth Callback simulation / production
    */
   async handleOAuthCallback(shopDomain: string, code: string): Promise<Store> {
+  try {
+
   const response = await axios.post(
     `https://${shopDomain}/admin/oauth/access_token`,
     {
@@ -73,6 +75,11 @@ export class ShopifyService {
   }
 
   return storeRepo.save(store);
+  } catch (error: any) {
+    console.error('SHOPIFY TOKEN ERROR');
+    console.error(error.response?.data);
+    throw error;
+  }
 }
 
   /**
