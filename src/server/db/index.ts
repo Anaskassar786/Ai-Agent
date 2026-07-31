@@ -646,17 +646,8 @@ constructor() {
 
   public async saveStore(store: Store): Promise<Store> {
   await pool.query(
-    `
-      id,
-  shopify_domain,
-  store_name,
-  owner_email,
-  currency,
-  installed_at,
-  is_active,
-  access_token,
-  active_plan
-)INSERT INTO stores (
+  `
+    INSERT INTO stores (
       id,
       shopify_domain,
       store_name,
