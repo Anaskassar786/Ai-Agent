@@ -134,6 +134,8 @@ export interface Recommendation {
   status: RecommendationStatus;
   confidenceScore: number; // 0 to 100
   opportunityValue: number;
+  recoveryProbability: number;
+  recommendedDiscount: number;
   currency: CurrencyCode;
   createdAt: string;
   updatedAt: string;

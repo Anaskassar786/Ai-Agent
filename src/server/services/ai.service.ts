@@ -18,6 +18,8 @@ import {
 import { recRepo, configRepo } from '../repositories/index.ts';
 import { localAIEngine } from './local-ai-engine.service.ts';
 import { recommendationBuilder } from './recommendation-builder.service.ts';
+import { geminiTriggerService } from './gemini-trigger.service.ts';
+import { opportunityEngine } from './opportunity-engine.service.ts';
 
 // Initialize server-side Gemini client
 let genaiClient: GoogleGenAI | null = null;
@@ -109,9 +111,15 @@ export class AIService {
     let aiReason = '';
     let aiActionSummary = '';
     const ai = getGenAI();console.log("Gemini Client:", ai ? "INITIALIZED" : "NULL");
-    console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
+    const shouldRunGemini = geminiTriggerService.shouldRun(
+  cart,
+  customer,
+  baseScore
+);
+  
+      console.log("GEMINI_API_KEY exists:", !!process.env.GEMINI_API_KEY);
 
-    if (ai) {
+    if (shouldRunGemini && ai) {
       try {
         const prompt = `You are the AI Decision Support Engine for a Shopify store named "${config.currencySymbol}".
 You MUST NOT hallucinate or invent any facts not present in the evidence below.
@@ -180,7 +188,13 @@ Respond in JSON ONLY:
       }
     }
 
-    const title = `${priority === 'Critical' ? '🚨 ' : priority === 'High' ? '⚡ ' : '💼 '}${actionType === 'VIP_PERSONAL_REACHOUT' ? 'VIP Reachout' : actionType === 'STOCK_REPLACEMENT' ? 'Stock Replacement' : 'Discount Recovery'}: ${customer ? `${customer.firstName} ${customer.lastName}` : 'Cart Recovery'} (${config.currencySymbol}${cart.totalValue.toFixed(2)})`;
+    const title = recommendationBuilder.buildTitle(
+  cart,
+  customer,
+  priority,
+  actionType,
+  config.currencySymbol
+);
 
     // 3. Create IMMUTABLE Evidence Snapshot
     const snapshotId = `snap_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
@@ -220,7 +234,9 @@ Respond in JSON ONLY:
       priority,
       status: existingRec ? existingRec.status : 'Open',
       confidenceScore: baseScore,
-      opportunityValue: cart.totalValue,
+      opportunityValue: opportunityEngine.calculateOpportunityValue(cart),
+      recoveryProbability: opportunityEngine.calculateRecoveryProbability(baseScore),
+      recommendedDiscount: opportunityEngine.recommendDiscount(cart, baseScore),
       currency: cart.currency,
       createdAt: existingRec ? existingRec.createdAt : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
