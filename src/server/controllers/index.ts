@@ -362,16 +362,32 @@ export class AnalyticsController {
 
       // 7-day trend chart
       const now = new Date();
-      const revenueTrend = Array.from({ length: 7 }).map((_, idx) => {
-        const d = new Date(now.getTime() - (6 - idx) * 24 * 3600 * 1000);
-        const dateStr = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        const randomFactor = 0.8 + (Math.sin(idx) * 0.4);
-        return {
-          date: dateStr,
-          recoverable: Math.round(800 * randomFactor + (idx * 150)),
-          recovered: Math.round(450 * randomFactor + (idx * 90))
-        };
-      });
+
+const revenueTrend = Array.from({ length: 7 }).map((_, idx) => {
+  const d = new Date(now.getTime() - (6 - idx) * 24 * 3600 * 1000);
+
+  const day = d.toISOString().split('T')[0];
+
+  const dayRecs = recs.filter(r =>
+    r.createdAt.startsWith(day)
+  );
+
+  return {
+    date: d.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric'
+    }),
+    recoverable: Math.round(
+      dayRecs.reduce((sum, r) => sum + r.opportunityValue, 0)
+    ),
+    recovered: Math.round(
+      dayRecs
+        .filter(r => r.status === 'Completed')
+        .reduce((sum, r) => sum + r.opportunityValue, 0)
+    )
+  };
+});
 
       const metrics: DashboardMetrics = {
         totalRecoverableRevenue,
