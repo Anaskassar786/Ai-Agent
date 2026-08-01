@@ -87,7 +87,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
 
           {/* Store Switcher */}
-          <div className="hidden md:flex items-center pl-6 border-l border-slate-800">
+          <div className="flex items-center pl-6 border-l border-slate-800">
             <div className="relative group">
               <button
   onClick={() => setOpenStoreMenu(!openStoreMenu)}
