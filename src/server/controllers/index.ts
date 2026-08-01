@@ -123,7 +123,10 @@ export class StoreController {
 export class RecommendationController {
   async listRecommendations(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       let recs = await recRepo.getByStoreId(storeId);
 
       const { priority, status, search, sortBy } = req.query;
