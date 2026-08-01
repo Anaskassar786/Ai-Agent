@@ -651,6 +651,8 @@ constructor() {
 }
 
   public async saveStore(store: Store): Promise<Store> {
+  console.log("SAVE STORE DEBUG");
+  console.log(store);
   await pool.query(
   `
     INSERT INTO stores (
