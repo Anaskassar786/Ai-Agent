@@ -420,7 +420,11 @@ const revenueTrend = Array.from({ length: 7 }).map((_, idx) => {
 
   async listCartsAndCustomers(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const carts = await cartRepo.getByStoreId(storeId);
       const customers = await customerRepo.getByStoreId(storeId);
       res.status(200).json({ carts, customers });
@@ -433,7 +437,11 @@ const revenueTrend = Array.from({ length: 7 }).map((_, idx) => {
 export class AuditController {
   async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const limit = Number(req.query.limit) || 100;
       const logs = await auditRepo.getByStoreId(storeId, limit);
       res.status(200).json(logs);
