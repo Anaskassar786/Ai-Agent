@@ -15,16 +15,16 @@ router.get('/install', (req, res) => {
   const scopes =
     'read_products,read_orders,read_customers,read_inventory,write_products';
 
-    `${process.env.APP_URL}/api/shopify/callback`;const redirectUri =
+    const redirectUri =
     `${process.env.APP_URL}/api/shopify/callback`;
      const state = crypto.randomUUID();
 
   const installUrl =
-    `https://${shop}/admin/oauth/authorize` +
-    `?client_id=${process.env.SHOPIFY_API_KEY}` +
-    `&scope=${encodeURIComponent(scopes)}` +
-    `&redirect_uri=${encodeURIComponent(redirectUri)}`;
-  + `&state=${state}`;
+  `https://${shop}/admin/oauth/authorize` +
+  `?client_id=${process.env.SHOPIFY_API_KEY}` +
+  `&scope=${encodeURIComponent(scopes)}` +
+  `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+  `&state=${state}`;
 
   res.redirect(installUrl);
 });
@@ -59,7 +59,7 @@ router.get('/customers', async (req, res) => {
   }
 });
 
-roter.get('/orders', async (req, res) => {
+router.get('/orders', async (req, res) => {
   try {
     const store = await storeRepo.getByDomain(req.query.shop as string);
 
