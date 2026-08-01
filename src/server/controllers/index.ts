@@ -454,7 +454,11 @@ export class AuditController {
 export class NotificationController {
   async listNotifications(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const notifs = await notifRepo.getByStoreId(storeId);
       res.status(200).json(notifs);
     } catch (err: any) {
