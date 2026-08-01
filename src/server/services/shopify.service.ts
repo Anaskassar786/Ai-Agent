@@ -54,28 +54,28 @@ export class ShopifyService {
 
   let store = await storeRepo.getByDomain(shopDomain);
 
-  if (!store) {
-    store = {
-      id: `store_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      shopifyDomain: shopDomain,
-      storeName: shopDomain
-        .replace('.myshopify.com', '')
-        .replace(/-/g, ' ')
-        .replace(/\b\w/g, l => l.toUpperCase()),
-      ownerName: 'Store Owner',
-      ownerEmail: `admin@${shopDomain.replace('.myshopify.com', '.com')}`,
-      currency: 'USD',
-      installedAt: new Date().toISOString(),
-      isActive: true,
-      accessToken,
-      activePlan: 'Launch'
-    };
-  } else {
-    store.isActive = true;
-    store.accessToken = accessToken;
-  }
+if (!store) {
+  store = {
+    id: `store_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    shopifyDomain: shopDomain,
+    storeName: shopDomain
+      .replace('.myshopify.com', '')
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase()),
+    ownerName: 'Store Owner',
+    ownerEmail: `admin@${shopDomain.replace('.myshopify.com', '.com')}`,
+    currency: 'USD',
+    installedAt: new Date().toISOString(),
+    isActive: true,
+    accessToken,
+    activePlan: 'Launch'
+  };
+} else {
+  store.isActive = true;
+  store.accessToken = accessToken;
+}
 
-  return storeRepo.save(store);
+return storeRepo.save(store);
   } catch (error: any) {
     console.error('SHOPIFY TOKEN ERROR');
     console.error(error.response?.data);
