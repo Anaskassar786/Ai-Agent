@@ -452,7 +452,7 @@ export class NotificationController {
     try {
       const storeId = (req as any).user?.storeId || 'store_fashionista';
       const { planId } = req.body;
-      if (!['Starter', 'Growth', 'Scale'].includes(planId)) {
+      if (!['Launch', 'Growth', 'Pro'].includes(planId)) {
   throw new Error('Invalid plan selected');
 }
       const store = await billingRepo.updateSubscription(storeId, {

@@ -224,7 +224,7 @@ CREATE INDEX idx_notifications_store_read ON notification_alerts(store_id, is_re
 -- ============================================================================
 INSERT INTO billing_plans (id, name, price_monthly, max_orders_per_month, max_recommendations, features)
 VALUES 
-('Starter', 'Starter Plan', 19.00, 500, 100, '["Core Abandoned Cart Detection", "Basic AI Reasoning", "Daily Email Digest", "Standard Rule Engine", "7-day Evidence Retention"]'::jsonb),
+('Launch', 'Launch Plan', 19.00, 500, 300, '["Core Abandoned Cart Detection", "Basic AI Reasoning", "Daily Email Digest", "Standard Rule Engine", "7-day Evidence Retention"]'::jsonb),
 ('Growth', 'Growth Plan', 49.00, 2500, 1000, '["VIP Customer Detection", "Advanced Explainable AI", "Instant Critical Email Alerts", "Custom Edge Rules", "30-day Immutable Evidence", "Multi-currency Support"]'::jsonb),
-('Scale', 'Scale Enterprise Plan', 199.00, 25000, 10000, '["Real-time Stock Drop Automation", "Dedicated AI Model Fine-tuning", "Custom Webhook Integrations", "Unlimited Evidence Archiving", "24/7 Priority Support"]'::jsonb)
+('Pro', 'Pro Plan', 99.00, 25000, -1, '["Real-time Stock Drop Automation", "Dedicated AI Model Fine-tuning", "Custom Webhook Integrations", "Unlimited Evidence Archiving", "24/7 Priority Support"]'::jsonb)
 ON CONFLICT (id) DO NOTHING;

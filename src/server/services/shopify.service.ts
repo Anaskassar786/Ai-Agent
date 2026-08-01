@@ -218,7 +218,7 @@ export class ShopifyService {
   /**
    * Shopify Billing API integration
    */
-  async createBillingSubscription(storeId: string, planId: 'Starter' | 'Growth' | 'Scale', returnUrl: string): Promise<{ confirmationUrl: string }> {
+  async createBillingSubscription(storeId: string, planId: 'Launch' | 'Growth' | 'Pro', returnUrl: string): Promise<{ confirmationUrl: string }> {
     const store = await storeRepo.getById(storeId);
     if (!store) throw new Error('Store not found');
     const plans = await billingRepo.getPlans();

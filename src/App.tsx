@@ -175,7 +175,7 @@ export function App() {
     }).then(r => r.json());
   };
 
-  const handleSubscribePlan = async (planId: 'Starter' | 'Growth' | 'Scale') => {
+  const handleSubscribePlan = async (planId: 'Launch' | 'Growth' | 'Pro') => {
     try {
       await fetch(`/api/billing/subscribe`, {
         method: 'POST',

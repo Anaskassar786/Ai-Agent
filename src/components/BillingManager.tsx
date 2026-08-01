@@ -20,7 +20,7 @@ import { BillingPlan, Store } from '../types.ts';
 interface BillingManagerProps {
   plans: BillingPlan[];
   activeStore: Store | null;
-  onSubscribe: (planId: 'Starter' | 'Growth' | 'Scale') => Promise<void>;
+  onSubscribe: (planId: 'Launch' | 'Growth' | 'Pro') => Promise<void>;
 }
 
 export const BillingManager: React.FC<BillingManagerProps> = ({
@@ -31,7 +31,7 @@ export const BillingManager: React.FC<BillingManagerProps> = ({
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const handleSelectPlan = async (planId: 'Starter' | 'Growth' | 'Scale') => {
+  const handleSelectPlan = async (planId: 'Launch' | 'Growth' | 'Pro') => {
     setLoadingPlan(planId);
     try {
       await onSubscribe(planId);

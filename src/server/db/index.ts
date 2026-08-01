@@ -43,12 +43,12 @@ constructor() {
 }
 
   private initBillingPlans() {
-    this.billingPlans.set('Starter', {
-      id: 'Starter',
-      name: 'Starter Plan',
+    this.billingPlans.set('Launch', {
+  id: 'Launch',
+  name: 'Launch Plan',
       priceMonthly: 19,
       maxOrdersPerMonth: 500,
-      maxRecommendations: 100,
+      maxRecommendations: 300,
       features: ['Core Abandoned Cart Detection', 'Basic AI Reasoning', 'Daily Email Digest', 'Standard Rule Engine', '7-day Evidence Retention'],
       isCurrent: false
     });
@@ -57,16 +57,16 @@ constructor() {
       name: 'Growth Plan',
       priceMonthly: 49,
       maxOrdersPerMonth: 2500,
-      maxRecommendations: 1000,
+      maxRecommendations: 3000,
       features: ['VIP Customer Detection', 'Advanced Explainable AI', 'Instant Critical Email Alerts', 'Custom Edge Rules', '30-day Immutable Evidence', 'Multi-currency Support'],
       isCurrent: true
     });
-    this.billingPlans.set('Scale', {
-      id: 'Scale',
-      name: 'Scale Enterprise Plan',
-      priceMonthly: 199,
+    this.billingPlans.set('Pro', {
+  id: 'Pro',
+  name: 'Pro Plan',
+      priceMonthly: 99,
       maxOrdersPerMonth: 50000,
-      maxRecommendations: 100000,
+      maxRecommendations: -1,
       features: ['Real-time Cart Intelligence', 'Custom AI Scoring Weights', 'Unlimited Rule Versioning', 'Infinite Immutable Evidence & Audit Log', 'Dedicated Webhook Priority Queue', 'Multi-store Synchronization'],
       isCurrent: false
     });

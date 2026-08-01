@@ -19,7 +19,7 @@ CREATE TABLE stores (
     installed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN DEFAULT TRUE,
     access_token TEXT,
-    active_plan VARCHAR(50) DEFAULT 'Starter'
+    active_plan VARCHAR(50) DEFAULT 'Launch'
     subscription_id TEXT,
     subscription_status VARCHAR(50),
     plan_name VARCHAR(50),

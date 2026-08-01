@@ -230,7 +230,7 @@ export interface NotificationAlert {
 }
 
 export interface BillingPlan {
-  id: 'Starter' | 'Growth' | 'Scale';
+  id: 'Launch' | 'Growth' | 'Pro';
   name: string;
   priceMonthly: number;
   maxOrdersPerMonth: number;
