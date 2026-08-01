@@ -279,7 +279,11 @@ export class RuleController {
 
   async toggleRule(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const rules = await ruleRepo.getByStoreId(storeId);
       const target = rules.find(r => r.id === req.params.id || r.ruleId === req.params.id);
       if (!target) {
