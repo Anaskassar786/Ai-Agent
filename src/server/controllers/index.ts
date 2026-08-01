@@ -249,7 +249,11 @@ export class RecommendationController {
 export class RuleController {
   async listRules(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const rules = await ruleRepo.getByStoreId(storeId);
       res.status(200).json(rules);
     } catch (err: any) {
@@ -260,7 +264,11 @@ export class RuleController {
   async createCustomRule(req: Request, res: Response): Promise<void> {
     try {
       const data = customRuleSchema.parse(req.body);
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const actor = (req as any).user?.name || 'MERCHANT_ADMIN';
       const created = await ruleService.saveCustomRule(storeId, data, actor);
       res.status(201).json(created);
