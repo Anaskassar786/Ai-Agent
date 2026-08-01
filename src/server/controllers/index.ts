@@ -452,7 +452,18 @@ export class NotificationController {
     try {
       const storeId = (req as any).user?.storeId || 'store_fashionista';
       const { planId } = req.body;
-      const store = await billingRepo.switchPlan(storeId, planId);
+      if (!['Starter', 'Growth', 'Scale'].includes(planId)) {
+  throw new Error('Invalid plan selected');
+}
+      const store = await billingRepo.updateSubscription(storeId, {
+  activePlan: planId,
+  planName: planId,
+  subscriptionStatus: 'ACTIVE',
+  billingApproved: true,
+  planActivatedAt: new Date().toISOString(),
+  recommendationsUsed: 0,
+  recommendationsLimit: 300
+});
       res.status(200).json({ success: true, activePlan: store.activePlan, confirmationUrl: `/dashboard?plan=${planId}&status=active` });
     } catch (err: any) {
       res.status(400).json({ error: err.message });

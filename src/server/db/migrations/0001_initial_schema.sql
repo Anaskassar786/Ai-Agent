@@ -29,8 +29,24 @@ CREATE TABLE IF NOT EXISTS stores (
     access_token VARCHAR(512) NOT NULL,
     scopes TEXT[] NOT NULL DEFAULT '{}',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+
     billing_plan VARCHAR(50) REFERENCES billing_plans(id) ON DELETE RESTRICT DEFAULT 'Growth',
-    billing_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE' CHECK (billing_status IN ('ACTIVE', 'TRIAL', 'PAST_DUE', 'CANCELLED')),
+    billing_status VARCHAR(50) NOT NULL DEFAULT 'ACTIVE'
+        CHECK (billing_status IN ('ACTIVE', 'TRIAL', 'PAST_DUE', 'CANCELLED')),
+
+    subscription_id TEXT,
+    subscription_status VARCHAR(50),
+    plan_name VARCHAR(50),
+    billing_approved BOOLEAN DEFAULT FALSE,
+    trial_ends_at TIMESTAMPTZ,
+    current_period_end TIMESTAMPTZ,
+    plan_activated_at TIMESTAMPTZ,
+
+    recommendations_used INTEGER DEFAULT 0,
+    recommendations_limit INTEGER DEFAULT 300,
+    month_start TIMESTAMPTZ,
+    month_end TIMESTAMPTZ,
+
     installed_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -49,7 +65,7 @@ CREATE TABLE IF NOT EXISTS store_configs (
     currency VARCHAR(10) NOT NULL DEFAULT 'USD',
     ai_sensitivity_level VARCHAR(20) NOT NULL DEFAULT 'MEDIUM' CHECK (ai_sensitivity_level IN ('LOW', 'MEDIUM', 'HIGH')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 4. CUSTOMERS TABLE (Synced Shopify Profiles)
@@ -87,7 +103,7 @@ CREATE TABLE IF NOT EXISTS carts (
     checkout_url TEXT,
     abandoned_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_carts_store_status ON carts(store_id, status);

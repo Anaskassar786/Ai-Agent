@@ -1,4 +1,4 @@
-import type { Cart, Customer, RuleExecution } from '../types/index.ts';
+import type { Cart, Customer, RuleExecution } from '../../types.ts';
 
 export class LocalAIEngine {
 

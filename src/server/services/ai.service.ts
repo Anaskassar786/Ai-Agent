@@ -16,6 +16,7 @@ import {
   RecommendationPriority
 } from '../../types.ts';
 import { recRepo, configRepo } from '../repositories/index.ts';
+import { db } from '../db/index.ts';
 import { localAIEngine } from './local-ai-engine.service.ts';
 import { recommendationBuilder } from './recommendation-builder.service.ts';
 import { geminiTriggerService } from './gemini-trigger.service.ts';
@@ -247,7 +248,21 @@ Respond in JSON ONLY:
     };
 
           const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
-      return recRepo.save(recommendation, actor, actionName);
+      const savedRecommendation = await recRepo.save(recommendation, actor, actionName);
+   console.log(
+  "USAGE CHECK",
+  {
+    existingRec: Boolean(existingRec),
+    storeId: recommendation.storeId,
+    actionName
+  }
+);
+
+if (!existingRec) {
+  await db.incrementUsage(recommendation.storeId);
+}
+
+return savedRecommendation;
     }
 }
 

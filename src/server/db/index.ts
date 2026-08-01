@@ -89,7 +89,7 @@ constructor() {
       installedAt: new Date(now.getTime() - 30 * 24 * 3600 * 1000).toISOString(),
       isActive: true,
       accessToken: 'shpca_sample_token_fashionista',
-      activePlan: 'Growth'
+      activePlan: 'Launch'
     };
     const store2: Store = {
       id: 'store_techpulse',
@@ -100,7 +100,7 @@ constructor() {
       installedAt: new Date(now.getTime() - 45 * 24 * 3600 * 1000).toISOString(),
       isActive: true,
       accessToken: 'shpca_sample_token_techpulse',
-      activePlan: 'Scale'
+      activePlan: 'Growth'
     };
     const store3: Store = {
       id: 'store_organic',
@@ -111,7 +111,7 @@ constructor() {
       installedAt: new Date(now.getTime() - 15 * 24 * 3600 * 1000).toISOString(),
       isActive: true,
       accessToken: 'shpca_sample_token_organic',
-      activePlan: 'Starter'
+      activePlan: 'Pro'
     };
 
     this.stores.set(store1.id, store1);
@@ -432,6 +432,8 @@ constructor() {
       status: 'Open',
       confidenceScore: 96,
       opportunityValue: 1240.00,
+      recoveryProbability: 75,
+      recommendedDiscount: 10,
       currency: 'USD',
       createdAt: twoHoursAgo,
       updatedAt: twoHoursAgo,
@@ -478,6 +480,8 @@ constructor() {
       status: 'Open',
       confidenceScore: 88,
       opportunityValue: 1370.00,
+      recoveryProbability: 85,
+      recommendedDiscount: 50,
       currency: 'EUR',
       createdAt: fourHoursAgo,
       updatedAt: fourHoursAgo,
@@ -523,6 +527,8 @@ constructor() {
       status: 'Open',
       confidenceScore: 78,
       opportunityValue: 320.00,
+      recoveryProbability: 75,
+      recommendedDiscount: 10,
       currency: 'USD',
       createdAt: twelveHoursAgo,
       updatedAt: twelveHoursAgo,
@@ -697,7 +703,119 @@ constructor() {
   return store;
 }
 
+    // ==========================================
+  // BILLING SUBSCRIPTION METHODS
   // ==========================================
+
+  public async updateSubscription(storeId: string, data: Partial<Store>): Promise<Store> {
+    const store = await this.getStoreById(storeId);
+
+    if (!store) {
+      throw new Error('Store not found');
+    }
+
+    const updatedStore: Store = {
+      ...store,
+      ...data
+    };
+
+    this.stores.set(storeId, updatedStore);
+
+    await pool.query(
+      `
+      UPDATE stores
+      SET
+        subscription_id = $1,
+        subscription_status = $2,
+        plan_name = $3,
+        billing_approved = $4,
+        trial_ends_at = $5,
+        current_period_end = $6,
+        plan_activated_at = $7,
+        recommendations_used = $8,
+        recommendations_limit = $9,
+        month_start = $10,
+        month_end = $11
+      WHERE id = $12
+      `,
+      [
+        updatedStore.subscriptionId ?? null,
+        updatedStore.subscriptionStatus ?? null,
+        updatedStore.planName ?? null,
+        updatedStore.billingApproved ?? false,
+        updatedStore.trialEndsAt ?? null,
+        updatedStore.currentPeriodEnd ?? null,
+        updatedStore.planActivatedAt ?? null,
+        updatedStore.recommendationsUsed ?? 0,
+        updatedStore.recommendationsLimit ?? 300,
+        updatedStore.monthStart ?? null,
+        updatedStore.monthEnd ?? null,
+        storeId
+      ]
+    );
+
+    return updatedStore;
+  }
+
+  public async incrementUsage(storeId: string, count: number = 1): Promise<void> {
+    const store = await this.getStoreById(storeId);
+
+    if (!store) {
+      throw new Error('Store not found');
+    }
+
+    store.recommendationsUsed =
+      (store.recommendationsUsed ?? 0) + count;
+
+    this.stores.set(storeId, store);
+
+    await pool.query(
+      `
+      UPDATE stores
+      SET recommendations_used = $1
+      WHERE id = $2
+      `,
+      [
+        store.recommendationsUsed,
+        storeId
+      ]
+    );
+  }
+
+  public async resetMonthlyUsage(
+    storeId: string,
+    monthStart: string,
+    monthEnd: string
+  ): Promise<void> {
+
+    const store = await this.getStoreById(storeId);
+
+    if (!store) {
+      throw new Error('Store not found');
+    }
+
+    store.recommendationsUsed = 0;
+    store.monthStart = monthStart;
+    store.monthEnd = monthEnd;
+
+    this.stores.set(storeId, store);
+
+    await pool.query(
+      `
+      UPDATE stores
+      SET
+        recommendations_used = 0,
+        month_start = $1,
+        month_end = $2
+      WHERE id = $3
+      `,
+      [
+        monthStart,
+        monthEnd,
+        storeId
+      ]
+    );
+  }
   // STORE CONFIG METHODS
   // ==========================================
   public getStoreConfig(storeId: string): StoreConfig {
@@ -801,6 +919,22 @@ constructor() {
   }
 
   public saveRecommendation(rec: Recommendation, actor: string = 'AI_ENGINE', actionName: string = 'RECOMMENDATION_UPDATED'): Recommendation {
+        if (actionName === 'RECOMMENDATION_CREATED') {
+      const store = this.stores.get(rec.storeId);
+
+      if (store) {
+        const used = store.recommendationsUsed ?? 0;
+        const limit = store.recommendationsLimit ?? 300;
+
+        if (used >= limit) {
+          throw new Error('Recommendation limit reached for current plan');
+        }
+
+        store.recommendationsUsed = used + 1;
+        this.stores.set(store.id, store);
+      }
+    }
+    
     // Constraint: One active recommendation per cart
     const existingActive = this.getActiveRecommendationByCartId(rec.cartId);
     if (existingActive && existingActive.id !== rec.id) {
@@ -959,7 +1093,10 @@ constructor() {
     return Array.from(this.billingPlans.values());
   }
 
-  public async switchPlan(storeId: string, planId: 'Starter' | 'Growth' | 'Scale'): Promise<Store> {
+  public async switchPlan(
+  storeId: string,
+  planId: 'Launch' | 'Growth' | 'Pro'
+): Promise<Store> {
     const store = await this.getStoreById(storeId);
     if (!store) throw new Error('Store not found');
     const oldPlan = store.activePlan;

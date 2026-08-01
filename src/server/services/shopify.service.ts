@@ -68,7 +68,7 @@ export class ShopifyService {
       installedAt: new Date().toISOString(),
       isActive: true,
       accessToken,
-      activePlan: 'Starter'
+      activePlan: 'Launch'
     };
   } else {
     store.isActive = true;

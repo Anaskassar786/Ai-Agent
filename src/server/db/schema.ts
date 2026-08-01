@@ -20,6 +20,17 @@ CREATE TABLE stores (
     is_active BOOLEAN DEFAULT TRUE,
     access_token TEXT,
     active_plan VARCHAR(50) DEFAULT 'Starter'
+    subscription_id TEXT,
+    subscription_status VARCHAR(50),
+    plan_name VARCHAR(50),
+    billing_approved BOOLEAN DEFAULT FALSE,
+    trial_ends_at TIMESTAMP WITH TIME ZONE,
+    current_period_end TIMESTAMP WITH TIME ZONE,
+    plan_activated_at TIMESTAMP WITH TIME ZONE,
+    recommendations_used INTEGER DEFAULT 0,
+    recommendations_limit INTEGER DEFAULT 300,
+    month_start TIMESTAMP WITH TIME ZONE,
+    month_end TIMESTAMP WITH TIME ZONE
 );
 
 CREATE TABLE store_configurations (

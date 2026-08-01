@@ -159,8 +159,33 @@ export class BillingRepository {
     return db.getBillingPlans();
   }
 
-  async switchPlan(storeId: string, planId: 'Starter' | 'Growth' | 'Scale'): Promise<Store> {
+  async switchPlan(
+  storeId: string,
+  planId: 'Launch' | 'Growth' | 'Pro'
+): Promise<Store> {
     return db.switchPlan(storeId, planId);
+  }
+
+  async updateSubscription(
+    storeId: string,
+    data: Partial<Store>
+  ): Promise<Store> {
+    return db.updateSubscription(storeId, data);
+  }
+
+  async incrementUsage(
+    storeId: string,
+    count: number = 1
+  ): Promise<void> {
+    return db.incrementUsage(storeId, count);
+  }
+
+  async resetMonthlyUsage(
+    storeId: string,
+    monthStart: string,
+    monthEnd: string
+  ): Promise<void> {
+    return db.resetMonthlyUsage(storeId, monthStart, monthEnd);
   }
 }
 

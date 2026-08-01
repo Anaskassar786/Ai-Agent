@@ -21,16 +21,45 @@ export type RuleType = 'CORE' | 'EDGE' | 'CUSTOM';
 
 export type CurrencyCode = 'USD' | 'EUR' | 'GBP' | 'CAD' | 'AUD' | 'JPY' | 'INR';
 
+export type SubscriptionStatus =
+  | 'PENDING'
+  | 'ACTIVE'
+  | 'DECLINED'
+  | 'EXPIRED'
+  | 'CANCELLED'
+  | 'UNINSTALLED';
+
 export interface Store {
   id: string;
   shopifyDomain: string;
   storeName: string;
   ownerEmail: string;
+  ownerName?: string;
   currency: CurrencyCode;
   installedAt: string;
   isActive: boolean;
   accessToken?: string;
-  activePlan: 'Starter' | 'Growth' | 'Scale';
+
+  // Existing plan system
+  activePlan: 'Launch' | 'Growth' | 'Pro';
+
+  // Billing system
+  subscriptionId?: string | null;
+  subscriptionStatus?: SubscriptionStatus | null;
+
+  planName?: 'Launch' | 'Growth' | 'Pro' | null;
+
+  billingApproved?: boolean;
+
+  trialEndsAt?: string | null;
+  currentPeriodEnd?: string | null;
+  planActivatedAt?: string | null;
+
+  recommendationsUsed?: number;
+  recommendationsLimit?: number;
+
+  monthStart?: string | null;
+  monthEnd?: string | null;
 }
 
 export interface StoreConfig {
