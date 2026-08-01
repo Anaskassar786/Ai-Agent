@@ -29,24 +29,6 @@ router.get('/install', (req, res) => {
   res.redirect(installUrl);
 });
 
-router.get('/callback', async (req, res) => {
-  try {
-    const shop = req.query.shop as string;
-    const code = req.query.code as string;
-
-    if (!shop || !code) {
-      return res.status(400).send('Missing shop or code');
-    }
-
-    await shopifyService.handleOAuthCallback(shop, code);
-
-    res.redirect('/');
-  } catch (error: any) {
-    console.error(error);
-    res.status(500).send(error.message);
-  }
-});
-
 router.get('/products', async (req, res) => {
   try {
     const store = await storeRepo.getByDomain(req.query.shop as string);
@@ -77,7 +59,7 @@ router.get('/customers', async (req, res) => {
   }
 });
 
-router.get('/orders', async (req, res) => {
+roter.get('/orders', async (req, res) => {
   try {
     const store = await storeRepo.getByDomain(req.query.shop as string);
 
