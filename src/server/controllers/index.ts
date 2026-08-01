@@ -100,7 +100,9 @@ export class StoreController {
 
   async getConfig(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = req.params.storeId || (req as any).user?.storeId;
+        req.query.storeId as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';const storeId = req.params.storeId || (req as any).user?.storeId;
       const config = await configRepo.getByStoreId(storeId);
       res.status(200).json(config);
     } catch (err: any) {
@@ -125,6 +127,7 @@ export class RecommendationController {
     try {
       const storeId =
   req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
   (req as any).user?.storeId ||
   'store_fashionista';
       let recs = await recRepo.getByStoreId(storeId);
