@@ -4,7 +4,7 @@
  * PROFIT TOOL — Merchant Dashboard Navbar
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Store, 
   Bell, 
@@ -41,6 +41,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const [isExporting, setIsExporting] = React.useState(false);
+  const [openStoreMenu, setOpenStoreMenu] = useState(false);
 
   const handleExportZip = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -88,7 +89,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Store Switcher */}
           <div className="hidden md:flex items-center pl-6 border-l border-slate-800">
             <div className="relative group">
-              <button className="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-800 text-slate-200 px-3.5 py-1.5 rounded-lg border border-slate-700/60 transition text-sm font-medium">
+              <button
+  onClick={() => setOpenStoreMenu(!openStoreMenu)}
+  className="flex items-center space-x-2 bg-slate-800/80 hover:bg-slate-800 text-slate-200 px-3.5 py-1.5 rounded-lg border border-slate-700/60 transition text-sm font-medium"
+>
                 <Store className="w-4 h-4 text-emerald-400" />
                 <span>{activeStore?.storeName || 'Select Store'}</span>
                 <span className="text-xs font-mono text-slate-400 bg-slate-900 px-1.5 py-0.5 rounded">
@@ -97,18 +101,18 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </button>
 
-              <div className="absolute left-0 mt-1 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-2 hidden group-hover:block z-50">
+              <div className={`absolute left-0 mt-1 w-64 bg-slate-800 border border-slate-700 rounded-xl shadow-xl py-2 z-50 ${openStoreMenu ? 'block' : 'hidden'}`}>
                 <div className="px-3 py-1 text-xs font-semibold text-slate-400 uppercase tracking-wider">
                   Connected Stores ({stores.length})
                 </div>
                 {stores.map((store) => (
-                  <button
-                    key={store.id}
-                    onClick={() => onSelectStore(store.id)}
-                    className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-slate-700/60 transition ${
-                      activeStore?.id === store.id ? 'text-emerald-400 font-medium bg-emerald-500/10' : 'text-slate-300'
-                    }`}
-                  >
+  <button
+    key={store.id}
+    onClick={() => onSelectStore(store.id)}
+    className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between hover:bg-slate-700/60 transition ${
+      activeStore?.id === store.id ? 'text-emerald-400 font-medium bg-emerald-500/10' : 'text-slate-300'
+    }`}
+  >
                     <div>
                       <div>{store.storeName}</div>
                       <div className="text-xs text-slate-400 font-mono">{store.shopifyDomain}</div>
