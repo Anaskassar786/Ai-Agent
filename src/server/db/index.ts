@@ -30,7 +30,12 @@ class DatabaseEngine {
   private recommendations: Map<string, Recommendation> = new Map();
   private evidenceSnapshots: Map<string, EvidenceSnapshot> = new Map();
   private ruleVersions: Map<string, RuleVersion> = new Map();
-  private auditLogs: AuditLogEntry[] = []; // Immutable append-only log
+  private auditLogs: AuditLogEntry  store.id,
+  store.shopifyDomain,
+  store.storeName,
+  store.ownerEmail,
+  store.ownerName,
+  store.currency,[] = []; // Immutable append-only log
   private feedback: Map<string, MerchantFeedback> = new Map();
   private notifications: Map<string, NotificationAlert> = new Map();
   private billingPlans: Map<string, BillingPlan> = new Map();
@@ -685,7 +690,7 @@ constructor() {
       store.shopifyDomain,
       store.storeName,
       store.ownerEmail,
-      store.ownerName,
+      store.ownerName || 'Shopify Merchant'
       store.currency,
       store.installedAt,
       store.isActive,
