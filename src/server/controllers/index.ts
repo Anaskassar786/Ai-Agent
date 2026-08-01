@@ -303,7 +303,11 @@ export class RuleController {
   async simulateCart(req: Request, res: Response): Promise<void> {
     try {
       const { cartValue, itemCount, vip, ageHours, discountCode } = req.body;
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const store = await storeRepo.getById(storeId);
 
       const simCart: any = {
@@ -341,7 +345,11 @@ export class RuleController {
 export class AnalyticsController {
   async getMetrics(req: Request, res: Response): Promise<void> {
     try {
-      const storeId = (req as any).user?.storeId || 'store_fashionista';
+      const storeId =
+  req.query.storeId as string ||
+  req.headers['x-demo-store-id'] as string ||
+  (req as any).user?.storeId ||
+  'store_fashionista';
       const recs = await recRepo.getByStoreId(storeId);
       const feedback = await feedbackRepo.getByStoreId(storeId);
 
