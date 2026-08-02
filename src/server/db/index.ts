@@ -908,7 +908,7 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       customer.totalOrders,
       customer.totalSpent,
       customer.isVIP,
-      JSON.stringify(customer.tags || [])
+      customer.tags || []
     ]
   );
 
