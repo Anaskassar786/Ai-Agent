@@ -88,6 +88,33 @@ router.get('/inventory', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.post('/sync', async (req, res) => {
+  try {
+    const { shop } = req.body;
+
+    if (!shop) {
+      return res.status(400).json({
+        error: 'shop required'
+      });
+    }
+
+    const { shopifySyncService } = await import('../services/shopify.sync.service.ts');
+
+    const result = await shopifySyncService.syncStore(shop);
+
+    res.json({
+      success: true,
+      result
+    });
+
+  } catch (error: any) {
+    console.error('SYNC ERROR:', error);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
 router.get('/callback', async (req, res) => {
   try {
     const { shop, code } = req.query as {

@@ -68,37 +68,11 @@ async function startServer() {
     }
   }));
   app.use(express.urlencoded({ extended: true }));
-  app.use(ErrorMiddleware.requestLogger);app.use(ErrorMiddleware.requestLogger);
-
-app.post('/api/v2/shopify/sync', async (req, res) => {
-  try {
-    const { shop } = req.body;
-
-    if (!shop) {
-      return res.status(400).json({
-        error: 'shop required'
-      });
-    }
-
-    const result =
-      await shopifySyncService.syncStore(shop);
-
-    res.json({
-      success: true,
-      result
-    });
-
-  } catch (error: any) {
-    console.error('SYNC ERROR:', error);
-
-    res.status(500).json({
-      error: error.message
-    });
-  }
-});
-app.use('/api/v2', apiRouter);
+app.use(ErrorMiddleware.requestLogger);
 
 // Mount modular v2 routers
+app.use('/api/v2', apiRouter);
+
   // Mount modular v2 routers (Document 13B Enterprise Structure)
 
   // ==========================================
