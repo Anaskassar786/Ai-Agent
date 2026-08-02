@@ -275,7 +275,7 @@ class DatabaseEngine {
       status: 'Abandoned',
       discountCode: 'VIP20',
       shippingCountry: 'US'
-    };
+     };
 
     const cart2: Cart = {
       id: 'cart_02_gaming_rig',
@@ -945,9 +945,12 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       items,
       total_value,
       currency,
-      status
-    )
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+      status,
+abandoned_at,
+created_at,
+updated_at
+)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
     ON CONFLICT (id)
     DO UPDATE SET
       customer_email = EXCLUDED.customer_email,
