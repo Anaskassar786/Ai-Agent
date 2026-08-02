@@ -70,7 +70,6 @@ async function startServer() {
   app.use(express.urlencoded({ extended: true }));
   app.use(ErrorMiddleware.requestLogger);app.use(ErrorMiddleware.requestLogger);
 
-app.use('/api/v2', apiRouter);
 app.post('/api/v2/shopify/sync', async (req, res) => {
   try {
     const { shop } = req.body;
@@ -97,6 +96,7 @@ app.post('/api/v2/shopify/sync', async (req, res) => {
     });
   }
 });
+app.use('/api/v2', apiRouter);
 
 // Mount modular v2 routers
   // Mount modular v2 routers (Document 13B Enterprise Structure)
