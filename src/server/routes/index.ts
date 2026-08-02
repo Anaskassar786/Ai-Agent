@@ -22,7 +22,7 @@ apiRouter.use('/shopify/sync', (req, res, next) => {
   next();
 });
 apiRouter.use('/shopify', shopifyRoutes);
-
+apiRouter.use('/webhooks', webhookRoutes);
 apiRouter.use(AuthMiddleware.verifyToken);
 
 apiRouter.use('/stores', storeRoutes);
@@ -32,7 +32,6 @@ apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/audit-logs', auditRoutes);
 apiRouter.use('/notifications', notifRoutes);
 apiRouter.use('/billing', billingRoutes);
-apiRouter.use('/webhooks', webhookRoutes);
 
 export default apiRouter;
 export {
