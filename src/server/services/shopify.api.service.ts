@@ -33,7 +33,10 @@ export class ShopifyApiService {
       }
     );
 
-    return response.data;
+    console.log("SHOPIFY GRAPHQL RESPONSE");
+console.dir(response.data, { depth: null });
+
+return response.data;
   }
   async getProducts(store: Store) {
     const query = `
