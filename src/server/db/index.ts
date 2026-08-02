@@ -959,16 +959,19 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
       status = EXCLUDED.status
     `,
     [
-      cart.id,
-      cart.storeId,
-      cart.shopifyCartId,
-      cart.customerId ?? null,
-      cart.customerEmail ?? null,
-      JSON.stringify(cart.items),
-      cart.totalValue,
-      cart.currency,
-      cart.status
-    ]
+     cart.id,
+     cart.storeId,
+     cart.shopifyCartId,
+     cart.customerId ?? null,
+     cart.customerEmail ?? null,
+     JSON.stringify(cart.items),
+     cart.totalValue,
+     cart.currency,
+     cart.status,
+     cart.abandonedAt,
+     cart.createdAt,
+     cart.updatedAt
+]
   );
 
   this.logAudit({
