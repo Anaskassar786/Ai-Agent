@@ -9,13 +9,13 @@ export class RecommendationBuilder {
 
   buildPriority(score: number): RecommendationPriority {
 
-    if (score >= 85) return 'Critical';
+    if (score >= 85) return 'CRITICAL';
 
-    if (score >= 70) return 'High';
+    if (score >= 70) return 'HIGH';
 
-    if (score < 50) return 'Low';
+    if (score < 50) return 'LOW';
 
-    return 'Medium';
+     return 'MEDIUM';
   }
   
 buildTitle(
