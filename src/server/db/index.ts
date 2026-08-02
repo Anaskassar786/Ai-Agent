@@ -875,8 +875,7 @@ class DatabaseEngine {
 public async saveCustomer(customer: Customer): Promise<Customer> {
   await pool.query(
     `
-    INSERT INTO customers
-    (
+    INSERT INTO customers (
       id,
       store_id,
       shopify_customer_id,
@@ -889,6 +888,15 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       tags
     )
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    ON CONFLICT (store_id, shopify_customer_id)
+    DO UPDATE SET
+      email = EXCLUDED.email,
+      first_name = EXCLUDED.first_name,
+      last_name = EXCLUDED.last_name,
+      total_orders = EXCLUDED.total_orders,
+      total_spent = EXCLUDED.total_spent,
+      is_vip = EXCLUDED.is_vip,
+      tags = EXCLUDED.tags
     `,
     [
       customer.id || crypto.randomUUID(),
@@ -900,7 +908,7 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       customer.totalOrders,
       customer.totalSpent,
       customer.isVIP,
-      customer.tags || []
+      JSON.stringify(customer.tags || [])
     ]
   );
 
@@ -1217,8 +1225,7 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
   public async saveInventory(item: any): Promise<any> {
   await pool.query(
     `
-    INSERT INTO inventory
-    (
+    INSERT INTO inventory (
       id,
       store_id,
       shopify_variant_id,
@@ -1226,6 +1233,10 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       inventory_quantity
     )
     VALUES ($1,$2,$3,$4,$5)
+    ON CONFLICT (store_id, shopify_variant_id)
+    DO UPDATE SET
+      product_title = EXCLUDED.product_title,
+      inventory_quantity = EXCLUDED.inventory_quantity
     `,
     [
       crypto.randomUUID(),
