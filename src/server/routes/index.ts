@@ -21,11 +21,12 @@ apiRouter.use('/auth', authRoutes);
 apiRouter.use('/shopify/sync', (req, res, next) => {
   next();
 });
+apiRouter.use('/shopify', shopifyRoutes);
+
 apiRouter.use(AuthMiddleware.verifyToken);
 
 apiRouter.use('/stores', storeRoutes);
 apiRouter.use('/recommendations', recRoutes);
-apiRouter.use('/shopify', shopifyRoutes);
 apiRouter.use('/rules', ruleRoutes);
 apiRouter.use('/analytics', analyticsRoutes);
 apiRouter.use('/audit-logs', auditRoutes);
