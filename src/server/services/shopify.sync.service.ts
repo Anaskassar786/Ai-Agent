@@ -57,6 +57,9 @@ export class ShopifySyncService {
     const orders =
       await shopifyApiService.getOrders(store);
 
+    console.log("ORDERS DEBUG:");
+    console.dir(orders, { depth: null });
+
     for (const edge of orders.data.orders.edges) {
       await orderRepo.save({
         storeId: store.id,

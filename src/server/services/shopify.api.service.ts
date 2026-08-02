@@ -89,7 +89,11 @@ return response.data;
               id
               name
               createdAt
-              totalPriceSet {
+      
+          displayFinancialStatus
+          displayFulfillmentStatus
+
+               totalPriceSet {
                 shopMoney {
                   amount
                   currencyCode
