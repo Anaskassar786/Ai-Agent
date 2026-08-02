@@ -1207,9 +1207,39 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
   // ==========================================
 
   public async saveOrder(order: any): Promise<any> {
-    this.orders.push(order);
-    return order;
-  }
+  await pool.query(
+    `
+    INSERT INTO orders
+    (
+      id,
+      store_id,
+      shopify_order_id,
+      customer_email,
+      total_price,
+      currency,
+      order_status
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7)
+    ON CONFLICT (store_id, shopify_order_id)
+    DO UPDATE SET
+      customer_email = EXCLUDED.customer_email,
+      total_price = EXCLUDED.total_price,
+      currency = EXCLUDED.currency,
+      order_status = EXCLUDED.order_status
+    `,
+    [
+      crypto.randomUUID(),
+      order.storeId,
+      order.shopifyOrderId,
+      order.customerEmail || null,
+      order.totalPrice,
+      order.currency || 'USD',
+      order.orderStatus || 'OPEN'
+    ]
+  );
+
+  return order;
+}
 
   public async getOrders(storeId: string): Promise<any[]> {
     return this.orders.filter(
