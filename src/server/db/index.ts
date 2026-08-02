@@ -1215,9 +1215,29 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
   // ==========================================
 
   public async saveInventory(item: any): Promise<any> {
-    this.inventories.push(item);
-    return item;
-  }
+  await pool.query(
+    `
+    INSERT INTO inventory
+    (
+      id,
+      store_id,
+      shopify_variant_id,
+      product_title,
+      inventory_quantity
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      crypto.randomUUID(),
+      item.storeId,
+      item.variantId,
+      item.productTitle,
+      item.quantity
+    ]
+  );
+
+  return item;
+}
 
   public async getInventory(storeId: string): Promise<any[]> {
     return this.inventories.filter(
