@@ -18,7 +18,9 @@ import { AuthMiddleware } from '../middleware/auth.middleware.ts';
 const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
-
+apiRouter.use('/shopify/sync', (req, res, next) => {
+  next();
+});
 apiRouter.use(AuthMiddleware.verifyToken);
 
 apiRouter.use('/stores', storeRoutes);
