@@ -6,6 +6,8 @@
  * and immutable audit logs with instant pre-seeded Shopify merchant test data.
  */
 
+import crypto from 'crypto';
+
 import {
   Store,
   StoreConfig,
@@ -1128,15 +1130,17 @@ class DatabaseEngine {
     `
     INSERT INTO products
     (
+      id,
       store_id,
       shopify_product_id,
       title,
       status,
       total_inventory
     )
-    VALUES ($1,$2,$3,$4,$5)
+    VALUES ($1,$2,$3,$4,$5,$6)
     `,
     [
+      crypto.randomUUID(),
       product.storeId,
       product.shopifyId,
       product.title,
