@@ -68,10 +68,38 @@ async function startServer() {
     }
   }));
   app.use(express.urlencoded({ extended: true }));
-  app.use(ErrorMiddleware.requestLogger);
+  app.use(ErrorMiddleware.requestLogger);app.use(ErrorMiddleware.requestLogger);
 
+app.use('/api/v2', apiRouter);
+app.post('/api/v2/shopify/sync', async (req, res) => {
+  try {
+    const { shop } = req.body;
+
+    if (!shop) {
+      return res.status(400).json({
+        error: 'shop required'
+      });
+    }
+
+    const result =
+      await shopifySyncService.syncStore(shop);
+
+    res.json({
+      success: true,
+      result
+    });
+
+  } catch (error: any) {
+    console.error('SYNC ERROR:', error);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
+
+// Mount modular v2 routers
   // Mount modular v2 routers (Document 13B Enterprise Structure)
-  app.use('/api/v2', apiRouter);
 
   // ==========================================
   // API ROUTE DEFINITIONS
@@ -303,32 +331,6 @@ with zipfile.ZipFile('/tmp/profit-tool-enterprise-source.zip', 'w', zipfile.ZIP_
   // Shopify Official Integration Endpoints
   app.get('/api/shopify/install', (req, res) => shopifyController.install(req, res));
   app.get('/api/shopify/callback', (req, res) => shopifyController.callback(req, res));
-  app.post('/api/v2/shopify/sync', async (req, res) => {
-  try {
-    const { shop } = req.body;
-
-    if (!shop) {
-      return res.status(400).json({
-        error: 'shop required'
-      });
-    }
-
-    const result =
-      await shopifySyncService.syncStore(shop);
-
-    res.json({
-      success: true,
-      result
-    });
-
-  } catch (error: any) {
-    console.error('SYNC ERROR:', error);
-
-    res.status(500).json({
-      error: error.message
-    });
-  }
-});
   app.post('/api/webhooks/shopify/*all', (req, res) => shopifyController.handleWebhook(req, res));
   app.post('/api/test/trigger-abandoned-cart', requireAuth, (req, res) => shopifyController.triggerTestCart(req, res));
 
