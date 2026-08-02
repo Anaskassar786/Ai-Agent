@@ -1168,6 +1168,11 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
       total_inventory
     )
     VALUES ($1,$2,$3,$4,$5,$6)
+    ON CONFLICT (store_id, shopify_product_id)
+    DO UPDATE SET
+      title = EXCLUDED.title,
+      status = EXCLUDED.status,
+      total_inventory = EXCLUDED.total_inventory
     `,
     [
       crypto.randomUUID(),
