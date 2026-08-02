@@ -930,18 +930,58 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
     return Array.from(this.carts.values()).find(c => c.storeId === storeId && c.shopifyCartId === shopifyCartId);
   }
 
-  public saveCart(cart: Cart): Cart {
-    this.carts.set(cart.id, cart);
-    this.logAudit({
-      storeId: cart.storeId,
-      entityId: cart.id,
-      entityType: 'CART',
-      action: 'CART_UPDATED_OR_CREATED',
-      actor: 'SHOPIFY_WEBHOOK',
-      metadata: { totalValue: cart.totalValue, status: cart.status }
-    });
-    return cart;
-  }
+  public async saveCart(cart: Cart): Promise<Cart> {
+
+  this.carts.set(cart.id, cart);
+
+  await pool.query(
+    `
+    INSERT INTO carts (
+      id,
+      store_id,
+      shopify_cart_id,
+      customer_id,
+      customer_email,
+      items,
+      total_value,
+      currency,
+      status
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+    ON CONFLICT (id)
+    DO UPDATE SET
+      customer_email = EXCLUDED.customer_email,
+      items = EXCLUDED.items,
+      total_value = EXCLUDED.total_value,
+      status = EXCLUDED.status
+    `,
+    [
+      cart.id,
+      cart.storeId,
+      cart.shopifyCartId,
+      cart.customerId ?? null,
+      cart.customerEmail ?? null,
+      JSON.stringify(cart.items),
+      cart.totalValue,
+      cart.currency,
+      cart.status
+    ]
+  );
+
+  this.logAudit({
+    storeId: cart.storeId,
+    entityId: cart.id,
+    entityType: 'CART',
+    action: 'CART_UPDATED_OR_CREATED',
+    actor: 'SHOPIFY_WEBHOOK',
+    metadata: {
+      totalValue: cart.totalValue,
+      status: cart.status
+    }
+  });
+
+  return cart;
+}
 
   // ==========================================
   // RECOMMENDATIONS METHODS (One active per cart!)
