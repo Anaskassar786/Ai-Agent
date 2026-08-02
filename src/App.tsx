@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar.tsx';
+  import { Navbar } from './components/Navbar.tsx';
 import { Sidebar, TabType } from './components/Sidebar.tsx';
 import { OverviewDashboard } from './components/OverviewDashboard.tsx';
 import { RecommendationsView } from './components/RecommendationsView.tsx';
@@ -16,20 +16,90 @@ import { CartIntelligenceHub } from './components/CartIntelligenceHub.tsx';
 import { BillingManager } from './components/BillingManager.tsx';
 import { AuditLogViewer } from './components/AuditLogViewer.tsx';
 import { NotificationCenter } from './components/NotificationCenter.tsx';
-import { 
-  Store, 
-  Recommendation, 
-  DashboardMetrics, 
-  RuleVersion, 
-  Cart, 
-  Customer, 
-  AuditLog, 
+import { Login } from './components/Login.tsx';
+import {
+  Store,
+  Recommendation,
+  DashboardMetrics,
+  RuleVersion,
+  Cart,
+  Customer,
+  AuditLog,
   NotificationAlert,
   BillingPlan,
   RecommendationStatus
 } from './types.ts';
+const refreshAccessToken = async () => {
+  const refreshToken = localStorage.getItem('profit_refresh_token');
+
+  if (!refreshToken) return false;
+
+  try {
+    const res = await fetch('/api/auth/refresh', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ refreshToken })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) return false;
+
+    localStorage.setItem('profit_token', data.token);
+    localStorage.setItem('profit_refresh_token', data.refreshToken);
+
+    return true;
+  } catch {
+    return false;
+  }
+};
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('profit_token');
+
+  return {
+    'Authorization': `Bearer ${token || ''}`,
+    'x-demo-store-id': localStorage.getItem('store_id') || ''
+  };
+};
+const authFetch = async (url: string, options: RequestInit = {}) => {
+  let response = await fetch(url, {
+    ...options,
+    headers: {
+      ...getAuthHeaders(),
+      ...(options.headers || {})
+    }
+  });
+
+  if (response.status === 401) {
+    const refreshed = await refreshAccessToken();
+
+    if (refreshed) {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          ...getAuthHeaders(),
+          ...(options.headers || {})
+        }
+      });
+    }
+  }
+
+  return response;
+};
 
 export function App() {
+const [authenticated, setAuthenticated] = useState(
+  !!localStorage.getItem('profit_token')
+);
+  const handleLogout = () => {
+  localStorage.removeItem('profit_token');
+  localStorage.removeItem('profit_refresh_token');
+  localStorage.removeItem('store_id');
+  localStorage.removeItem('user');
+  setAuthenticated(false);
+};
   const [activeTab, setActiveTab] = useState<TabType>('overview');
   const [stores, setStores] = useState<Store[]>([]);
   const [activeStore, setActiveStore] = useState<Store | null>(null);
@@ -52,10 +122,10 @@ export function App() {
   // Initial Data Fetching from Express API
   const fetchAllData = async (storeId?: string) => {
     try {
-      const headers = {
-        'Authorization': 'Bearer sample_jwt_token',
-        'x-demo-store-id': storeId || activeStore?.id || 'store_fashionista'
-      };
+        const headers = {
+  ...getAuthHeaders(),
+  'x-demo-store-id': storeId || activeStore?.id || 'store_fashionista'
+};
 
       const [
         storesRes,
@@ -67,15 +137,15 @@ export function App() {
         notifRes,
         billingRes
       ] = await Promise.all([
-        fetch('/api/stores', { headers }).then(r => r.json()),
-        fetch('/api/recommendations', { headers }).then(r => r.json()),
-        fetch('/api/analytics/metrics', { headers }).then(r => r.json()),
-        fetch('/api/rules', { headers }).then(r => r.json()),
-        fetch('/api/analytics/carts-customers', { headers }).then(r => r.json()),
-        fetch('/api/audit-logs', { headers }).then(r => r.json()),
-        fetch('/api/notifications', { headers }).then(r => r.json()),
-        fetch('/api/billing/plans', { headers }).then(r => r.json())
-      ]);
+  authFetch('/api/stores', { headers }).then(r => r.json()),
+  authFetch('/api/recommendations', { headers }).then(r => r.json()),
+  authFetch('/api/analytics/metrics', { headers }).then(r => r.json()),
+  authFetch('/api/rules', { headers }).then(r => r.json()),
+  authFetch('/api/analytics/carts-customers', { headers }).then(r => r.json()),
+  authFetch('/api/audit-logs', { headers }).then(r => r.json()),
+  authFetch('/api/notifications', { headers }).then(r => r.json()),
+  authFetch('/api/billing/plans', { headers }).then(r => r.json())
+]);
 
       if (Array.isArray(storesRes)) {
         setStores(storesRes);
@@ -102,52 +172,66 @@ export function App() {
     }
   };
 
-  useEffect(() => {
+        useEffect(() => {
+  const checkAuth = async () => {
+    const token = localStorage.getItem('profit_token');
+
+    if (!token) {
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        setAuthenticated(true);
+      }
+
+      return;
+    }
+
     fetchAllData();
-  }, []);
+  };
+
+  checkAuth();
+}, []);
 
   // Handlers
   const handleSelectStore = async (storeId: string) => {
     await fetchAllData(storeId);
   };
 
-  const handleUpdateRecommendationStatus = async (id: string, status: RecommendationStatus, snoozedUntil?: string) => {
-    try {
-      const res = await fetch(`/api/recommendations/${id}/status`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
-        body: JSON.stringify({ status, snoozedUntil })
-      }).then(r => r.json());
+  const handleSubmitFeedback = async (
+  id: string,
+  isUseful: boolean,
+  comments?: string
+) => {
+  try {
+    await authFetch(`/api/recommendations/${id}/feedback`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        isUseful,
+        comments,
+        reason: isUseful
+          ? 'Merchant verified helpful'
+          : 'Merchant marked inaccurate'
+      })
+    });
 
-      if (res && !res.error) {
-        setRecommendations(prev => prev.map(r => r.id === id ? res : r));
-        if (selectedRecommendation?.id === id) setSelectedRecommendation(res);
-        await fetchAllData();
-      }
-    } catch (err) {
-      console.error('Status update failed:', err);
-    }
-  };
-
-  const handleSubmitFeedback = async (id: string, isUseful: boolean, comments?: string) => {
-    try {
-      await fetch(`/api/recommendations/${id}/feedback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
-        body: JSON.stringify({ isUseful, comments, reason: isUseful ? 'Merchant verified helpful' : 'Merchant marked inaccurate' })
-      });
-      await fetchAllData();
-    } catch (err) {
-      console.error('Feedback submission failed:', err);
-    }
-  };
+    await fetchAllData();
+  } catch (err) {
+    console.error('Feedback submission failed:', err);
+  }
+};
 
   const handleToggleRule = async (ruleId: string) => {
     try {
-      await fetch(`/api/rules/${ruleId}/toggle`, {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer sample_jwt_token' }
-      });
+      await authFetch(`/api/rules/${ruleId}/toggle`, {
+  method: 'PATCH',
+  headers: {
+    ...getAuthHeaders()
+  }
+});
       await fetchAllData();
     } catch (err) {
       console.error('Toggle rule failed:', err);
@@ -156,9 +240,12 @@ export function App() {
 
   const handleCreateRule = async (ruleData: any) => {
     try {
-      await fetch(`/api/rules`, {
+      await authFetch(`/api/rules`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
+        headers: {
+  'Content-Type': 'application/json',
+  ...getAuthHeaders()
+},
         body: JSON.stringify(ruleData)
       });
       await fetchAllData();
@@ -168,20 +255,30 @@ export function App() {
   };
 
   const handleSimulateRule = async (params: any) => {
-    return fetch(`/api/rules/simulate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
-      body: JSON.stringify(params)
-    }).then(r => r.json());
-  };
+  return authFetch(`/api/rules/simulate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAuthHeaders()
+    },
+    body: JSON.stringify(params)
+  }).then(r => r.json());
+};
 
-  const handleSubscribePlan = async (planId: 'Launch' | 'Growth' | 'Pro') => {
-    try {
-      await fetch(`/api/billing/subscribe`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
-        body: JSON.stringify({ planId, returnUrl: '/dashboard' })
-      });
+     const handleSubscribePlan = async (planId: 'Launch' | 'Growth' | 'Pro') => {
+  try {
+    await authFetch(`/api/billing/subscribe`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
+      body: JSON.stringify({
+        planId,
+        returnUrl: '/dashboard'
+      })
+    });
+
       await fetchAllData();
     } catch (err) {
       console.error('Subscribe failed:', err);
@@ -190,10 +287,12 @@ export function App() {
 
   const handleMarkNotifAsRead = async (id: string) => {
     try {
-      await fetch(`/api/notifications/${id}/read`, {
-        method: 'PATCH',
-        headers: { 'Authorization': 'Bearer sample_jwt_token' }
-      });
+      await authFetch(`/api/notifications/${id}/read`, {
+  method: 'PATCH',
+  headers: {
+    ...getAuthHeaders()
+  }
+});
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     } catch (err) {
       console.error('Mark read failed:', err);
@@ -202,10 +301,12 @@ export function App() {
 
   const handleMarkAllNotifsAsRead = async () => {
     try {
-      await fetch(`/api/notifications/mark-all-read`, {
-        method: 'POST',
-        headers: { 'Authorization': 'Bearer sample_jwt_token' }
-      });
+      await authFetch(`/api/notifications/mark-all-read`, {
+  method: 'POST',
+  headers: {
+    ...getAuthHeaders()
+  }
+});
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (err) {
       console.error('Mark all read failed:', err);
@@ -215,9 +316,12 @@ export function App() {
   const handleTriggerTestWebhook = async () => {
     setIsSimulating(true);
     try {
-      await fetch(`/api/test/trigger-abandoned-cart`, {
+      await authFetch(`/api/test/trigger-abandoned-cart`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer sample_jwt_token' },
+        headers: {
+  'Content-Type': 'application/json',
+  ...getAuthHeaders()
+},
         body: JSON.stringify({
           shopDomain: activeStore?.shopifyDomain,
           totalValue: Math.floor(Math.random() * 800) + 200,
@@ -236,11 +340,19 @@ export function App() {
   const activeRecsCount = recommendations.filter(r => r.status !== 'Completed' && r.status !== 'Archived').length;
   const unreadNotifsCount = notifications.filter(n => !n.isRead).length;
 
+if (!authenticated) {
   return (
+    <Login 
+      onLogin={() => setAuthenticated(true)}
+    />
+  );
+}  
+return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
       
       {/* Top Navbar */}
-      <Navbar
+        stores={stores}
+  activeStore={activeStore}<Navbar
         stores={stores}
         activeStore={activeStore}
         onSelectStore={handleSelectStore}
@@ -248,6 +360,7 @@ export function App() {
         onOpenNotifications={() => setActiveTab('notifications')}
         onTriggerTestWebhook={handleTriggerTestWebhook}
         isSimulating={isSimulating}
+        onLogout={handleLogout}
       />
 
       {/* Main Container: Sidebar + Content */}

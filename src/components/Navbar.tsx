@@ -28,6 +28,7 @@ interface NavbarProps {
   onOpenNotifications: () => void;
   onTriggerTestWebhook: () => void;
   isSimulating: boolean;
+  onLogout: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -37,7 +38,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   notifications,
   onOpenNotifications,
   onTriggerTestWebhook,
-  isSimulating
+  isSimulating,
+  onLogout
 }) => {
   const unreadCount = notifications.filter(n => !n.isRead).length;
   const [isExporting, setIsExporting] = React.useState(false);
@@ -129,7 +131,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
         {/* Right Actions & Status */}
         <div className="flex items-center space-x-4">
-          
+<button
+  onClick={onLogout}
+  className="bg-red-600 hover:bg-red-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium transition"
+>
+  Logout
+</button>        
+  
           {/* Direct Export / Download ZIP Button */}
           <button
             onClick={handleExportZip}

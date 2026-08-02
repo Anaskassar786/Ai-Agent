@@ -38,10 +38,10 @@ router.get('/products', async (req, res) => {
     }
 
     const data = await shopifyApiService.getProducts(store);
-    res.json(data);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
+res.json(data);
+} catch (error: any) {
+  res.status(500).json({ error: error.message });
+}
 });
 
 router.get('/customers', async (req, res) => {
@@ -88,5 +88,27 @@ router.get('/inventory', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.get('/callback', async (req, res) => {
+  try {
+    const { shop, code } = req.query as {
+      shop: string;
+      code: string;
+    };
 
+    if (!shop || !code) {
+      return res.status(400).send('Missing shop or code');
+    }
+
+    const store = await shopifyService.exchangeCodeForAccessToken(shop, code);
+
+    res.redirect(`/?shop=${shop}&installed=true&storeId=${store.id}`);
+  } catch (error: any) {
+  console.error('SHOPIFY CALLBACK ERROR:', error);
+
+  res.status(500).json({
+    error: error?.message,
+    stack: error?.stack
+  });
+}
+});
 export default router;

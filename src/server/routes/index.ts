@@ -13,10 +13,14 @@ import auditRoutes from './audit.routes.ts';
 import notifRoutes from './notifications.routes.ts';
 import billingRoutes from './billing.routes.ts';
 import webhookRoutes from './webhooks.routes.ts';
+import { AuthMiddleware } from '../middleware/auth.middleware.ts';
 
 const apiRouter = Router();
 
 apiRouter.use('/auth', authRoutes);
+
+apiRouter.use(AuthMiddleware.verifyToken);
+
 apiRouter.use('/stores', storeRoutes);
 apiRouter.use('/recommendations', recRoutes);
 apiRouter.use('/shopify', shopifyRoutes);

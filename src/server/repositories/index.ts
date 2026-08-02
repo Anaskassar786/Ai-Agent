@@ -200,3 +200,36 @@ export const auditRepo = new AuditRepository();
 export const feedbackRepo = new FeedbackRepository();
 export const notifRepo = new NotificationRepository();
 export const billingRepo = new BillingRepository();
+export class ProductRepository {
+  async save(product: any) {
+    return db.saveProduct(product);
+  }
+
+  async getByStoreId(storeId: string) {
+    return db.getProducts(storeId);
+  }
+}
+
+export class OrderRepository {
+  async save(order: any) {
+    return db.saveOrder(order);
+  }
+
+  async getByStoreId(storeId: string) {
+    return db.getOrders(storeId);
+  }
+}
+
+export class InventoryRepository {
+  async save(item: any) {
+    return db.saveInventory(item);
+  }
+
+  async getByStoreId(storeId: string) {
+    return db.getInventory(storeId);
+  }
+}
+
+export const productRepo = new ProductRepository();
+export const orderRepo = new OrderRepository();
+export const inventoryRepo = new InventoryRepository();

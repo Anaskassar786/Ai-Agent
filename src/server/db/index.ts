@@ -1115,6 +1115,55 @@ class DatabaseEngine {
     });
     return store;
   }
-}
+  // ==========================================
+  // SHOPIFY PRODUCTS
+  // ==========================================
 
+  public products: any[] = [];
+  public orders: any[] = [];
+  public inventories: any[] = [];
+
+  public async saveProduct(product: any): Promise<any> {
+    this.products.push(product);
+    return product;
+  }
+
+  public async getProducts(storeId: string): Promise<any[]> {
+    return this.products.filter(
+      (p) => p.storeId === storeId
+    );
+  }
+
+
+  // ==========================================
+  // SHOPIFY ORDERS
+  // ==========================================
+
+  public async saveOrder(order: any): Promise<any> {
+    this.orders.push(order);
+    return order;
+  }
+
+  public async getOrders(storeId: string): Promise<any[]> {
+    return this.orders.filter(
+      (o) => o.storeId === storeId
+    );
+  }
+
+
+  // ==========================================
+  // SHOPIFY INVENTORY
+  // ==========================================
+
+  public async saveInventory(item: any): Promise<any> {
+    this.inventories.push(item);
+    return item;
+  }
+
+  public async getInventory(storeId: string): Promise<any[]> {
+    return this.inventories.filter(
+      (i) => i.storeId === storeId
+    );
+   }
+}
 export const db = new DatabaseEngine();

@@ -23,10 +23,12 @@ import {
   shopifyController
 } from './src/server/controllers/index.ts';
 import { authService } from './src/server/services/auth.service.ts';
+import { shopifySyncService } from './src/server/services/shopify.sync.service.ts';
 import { POSTGRESQL_DDL_SCHEMA } from './src/server/db/schema.ts';
 import { ErrorMiddleware } from './src/server/middleware/index.ts';
 import apiRouter from './src/server/routes/index.ts';
 import { EnterpriseLogger } from './src/server/utils/index.ts';
+import { AuthMiddleware } from './src/server/middleware/auth.middleware.ts';
 
 const PORT = 3000;
 
@@ -34,25 +36,25 @@ const PORT = 3000;
 async function requireAuth(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const authHeader = req.headers.authorization;
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // In preview mode without token, allow fallback guest/demo session for instant testing
-      const demoToken = req.headers['x-demo-store-id'] as string;
-      if (demoToken) {
-        (req as any).user = { userId: 'usr_demo', email: 'owner@fashionistaboutique.com', storeId: demoToken, role: 'OWNER', name: 'DEMO' };
-        return next();
-      }
-      (req as any).user = { userId: 'usr_demo', email: 'owner@fashionistaboutique.com', storeId: 'store_fashionista', role: 'OWNER', name: 'SARAH (OWNER)' };
-      return next();
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Bearer token required'
+      });
     }
 
     const token = authHeader.split(' ')[1];
     const decoded = await authService.verifyToken(token);
+
     (req as any).user = decoded;
-    next();
+
+    return next();
   } catch (err) {
-    // If JWT validation fails, default to demo session for smooth preview UX
-    (req as any).user = { userId: 'usr_demo', email: 'owner@fashionistaboutique.com', storeId: 'store_fashionista', role: 'OWNER', name: 'DEMO MERCHANT' };
-    next();
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Invalid or expired token'
+    });
   }
 }
 
@@ -244,12 +246,22 @@ with zipfile.ZipFile('/tmp/profit-tool-enterprise-source.zip', 'w', zipfile.ZIP_
   // Auth Routes
   app.post('/api/auth/login', (req, res) => authController.login(req, res));
   app.post('/api/auth/refresh', (req, res) => authController.refresh(req, res));
-  app.post('/api/auth/switch-store', requireAuth, (req, res) => authController.switchStore(req, res));
+  app.post(
+  '/api/auth/switch-store',
+  requireAuth,
+  AuthMiddleware.requireRole(['OWNER']),
+  (req, res) => authController.switchStore(req, res)
+);
 
   // Stores & Configuration
   app.get('/api/stores', requireAuth, (req, res) => storeController.listStores(req, res));
   app.get('/api/stores/config', requireAuth, (req, res) => storeController.getConfig(req, res));
-  app.put('/api/stores/config', requireAuth, (req, res) => storeController.updateConfig(req, res));
+  app.put(
+  '/api/stores/config',
+  requireAuth,
+  AuthMiddleware.requireRole(['OWNER']),
+  (req, res) => storeController.updateConfig(req, res)
+);
 
   // Recommendations & Explainability
   app.get('/api/recommendations', requireAuth, (req, res) => recController.listRecommendations(req, res));
@@ -260,7 +272,12 @@ with zipfile.ZipFile('/tmp/profit-tool-enterprise-source.zip', 'w', zipfile.ZIP_
 
   // Rule Engine
   app.get('/api/rules', requireAuth, (req, res) => ruleController.listRules(req, res));
-  app.post('/api/rules', requireAuth, (req, res) => ruleController.createCustomRule(req, res));
+  app.post(
+  '/api/rules',
+  requireAuth,
+  AuthMiddleware.requireRole(['OWNER']),
+  (req, res) => ruleController.createCustomRule(req, res)
+);
   app.patch('/api/rules/:id/toggle', requireAuth, (req, res) => ruleController.toggleRule(req, res));
   app.post('/api/rules/simulate', requireAuth, (req, res) => ruleController.simulateCart(req, res));
 
@@ -276,11 +293,42 @@ with zipfile.ZipFile('/tmp/profit-tool-enterprise-source.zip', 'w', zipfile.ZIP_
 
   // Billing API
   app.get('/api/billing/plans', requireAuth, (req, res) => billingController.listPlans(req, res));
-  app.post('/api/billing/subscribe', requireAuth, (req, res) => billingController.subscribe(req, res));
+  app.post(
+  '/api/billing/subscribe',
+  requireAuth,
+  AuthMiddleware.requireRole(['OWNER']),
+  (req, res) => billingController.subscribe(req, res)
+);
 
   // Shopify Official Integration Endpoints
   app.get('/api/shopify/install', (req, res) => shopifyController.install(req, res));
   app.get('/api/shopify/callback', (req, res) => shopifyController.callback(req, res));
+  app.post('/api/v2/shopify/sync', async (req, res) => {
+  try {
+    const { shop } = req.body;
+
+    if (!shop) {
+      return res.status(400).json({
+        error: 'shop required'
+      });
+    }
+
+    const result =
+      await shopifySyncService.syncStore(shop);
+
+    res.json({
+      success: true,
+      result
+    });
+
+  } catch (error: any) {
+    console.error('SYNC ERROR:', error);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
   app.post('/api/webhooks/shopify/*all', (req, res) => shopifyController.handleWebhook(req, res));
   app.post('/api/test/trigger-abandoned-cart', requireAuth, (req, res) => shopifyController.triggerTestCart(req, res));
 
