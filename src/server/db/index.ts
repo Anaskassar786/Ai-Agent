@@ -872,10 +872,40 @@ class DatabaseEngine {
     return Array.from(this.customers.values()).find(c => c.storeId === storeId && c.shopifyCustomerId === shopifyCustomerId);
   }
 
-  public saveCustomer(customer: Customer): Customer {
-    this.customers.set(customer.id, customer);
-    return customer;
-  }
+public async saveCustomer(customer: Customer): Promise<Customer> {
+  await pool.query(
+    `
+    INSERT INTO customers
+    (
+      id,
+      store_id,
+      shopify_customer_id,
+      email,
+      first_name,
+      last_name,
+      total_orders,
+      total_spent,
+      is_vip,
+      tags
+    )
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+    `,
+    [
+      customer.id || crypto.randomUUID(),
+      customer.storeId,
+      customer.shopifyCustomerId,
+      customer.email,
+      customer.firstName,
+      customer.lastName,
+      customer.totalOrders,
+      customer.totalSpent,
+      customer.isVIP,
+      JSON.stringify(customer.tags || [])
+    ]
+  );
+
+  return customer;
+}
 
   // ==========================================
   // CART METHODS
