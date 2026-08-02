@@ -179,17 +179,39 @@ return storeRepo.save(store);
   }
 
   private async handleOrderCreate(store: Store, payload: any): Promise<void> {
-    // When an order is created, check if it recovered an abandoned cart!
-    const customerEmail = payload.email || payload.customer?.email;
-    if (customerEmail) {
-      const carts = await cartRepo.getByStoreId(store.id);
-      const matchingCart = carts.find(c => c.customerEmail === customerEmail && c.status === 'Abandoned');
-      if (matchingCart) {
-        matchingCart.status = 'Recovered';
-        await cartRepo.save(matchingCart);
-      }
+
+  // Save order to database
+  await orderRepo.save({
+    storeId: store.id,
+    shopifyOrderId: payload.id,
+    customerEmail: payload.email || payload.customer?.email || null,
+    totalPrice: parseFloat(
+      payload.total_price ||
+      payload.current_total_price ||
+      payload.totalPriceSet?.shopMoney?.amount ||
+      "0"
+    ),
+    currency: payload.currency || store.currency,
+    orderStatus: payload.financial_status || "PAID"
+  });
+
+  // Recover abandoned cart
+  const customerEmail = payload.email || payload.customer?.email;
+
+  if (customerEmail) {
+    const carts = await cartRepo.getByStoreId(store.id);
+
+    const matchingCart = carts.find(
+      c => c.customerEmail === customerEmail &&
+      c.status === "Abandoned"
+    );
+
+    if (matchingCart) {
+      matchingCart.status = "Recovered";
+      await cartRepo.save(matchingCart);
     }
   }
+}
 
   private async handleCustomerUpdate(store: Store, payload: any): Promise<void> {
     const shopifyCustomerId = payload.id ? `sh_cust_${payload.id}` : `sh_cust_${Date.now()}`;
