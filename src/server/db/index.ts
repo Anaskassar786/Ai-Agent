@@ -960,7 +960,54 @@ public async saveCustomer(customer: Customer): Promise<Customer> {
     );
   }
 
-  public saveRecommendation(rec: Recommendation, actor: string = 'AI_ENGINE', actionName: string = 'RECOMMENDATION_UPDATED'): Recommendation {
+  public async saveRecommendation(rec: Recommendation, actor: string = 'AI_ENGINE', actionName: string = 'RECOMMENDATION_UPDATED'): Promise<Recommendation> {
+await pool.query(
+`
+INSERT INTO recommendations (
+id,
+store_id,
+cart_id,
+customer_id,
+priority,
+status,
+action_title,
+action_description,
+suggested_discount_value,
+confidence_score,
+rules_fired,
+ai_explanation,
+evidence_history,
+created_at,
+updated_at
+)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+ON CONFLICT (id)
+DO UPDATE SET
+status = EXCLUDED.status,
+action_title = EXCLUDED.action_title,
+action_description = EXCLUDED.action_description,
+confidence_score = EXCLUDED.confidence_score,
+ai_explanation = EXCLUDED.ai_explanation,
+updated_at = EXCLUDED.updated_at
+`,
+[
+rec.id,
+rec.storeId,
+rec.cartId,
+rec.customerId ?? null,
+rec.priority,
+rec.status,
+rec.title,
+rec.actionSummary,
+rec.recommendedDiscount,
+rec.confidenceScore,
+rec.rulesFiredCount,
+rec.reason,
+JSON.stringify(rec.evidenceHistory),
+rec.createdAt,
+rec.updatedAt
+]
+);
         if (actionName === 'RECOMMENDATION_CREATED') {
       const store = this.stores.get(rec.storeId);
 
