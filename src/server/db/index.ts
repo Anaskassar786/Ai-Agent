@@ -1124,9 +1124,29 @@ class DatabaseEngine {
   public inventories: any[] = [];
 
   public async saveProduct(product: any): Promise<any> {
-    this.products.push(product);
-    return product;
-  }
+  await pool.query(
+    `
+    INSERT INTO products
+    (
+      store_id,
+      shopify_product_id,
+      title,
+      status,
+      total_inventory
+    )
+    VALUES ($1,$2,$3,$4,$5)
+    `,
+    [
+      product.storeId,
+      product.shopifyId,
+      product.title,
+      product.status,
+      product.inventory
+    ]
+  );
+
+  return product;
+}
 
   public async getProducts(storeId: string): Promise<any[]> {
     return this.products.filter(
