@@ -696,7 +696,7 @@ class DatabaseEngine {
     ]
   );
 
-  this.logAudit({
+await this.logAudit({
     storeId: store.id,
     entityId: store.id,
     entityType: 'AUTH',
@@ -842,11 +842,11 @@ class DatabaseEngine {
     return conf;
   }
 
-  public updateStoreConfig(storeId: string, updates: Partial<StoreConfig>, actor: string = 'MERCHANT_USER'): StoreConfig {
+  public async updateStoreConfig(storeId: string, updates: Partial<StoreConfig>, actor: string = 'MERCHANT_USER'): StoreConfig {
     const current = this.getStoreConfig(storeId);
     const updated = { ...current, ...updates, updatedAt: new Date().toISOString() };
     this.configs.set(storeId, updated);
-    this.logAudit({
+   await this.logAudit({
       storeId,
       entityId: storeId,
       entityType: 'CONFIG',
@@ -974,7 +974,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
 ]
   );
 
-  this.logAudit({
+ await this.logAudit({
     storeId: cart.storeId,
     entityId: cart.id,
     entityType: 'CART',
@@ -1167,9 +1167,9 @@ rec.updatedAt
     return this.getRuleVersions(storeId).filter(r => r.isActive);
   }
 
-  public saveRuleVersion(rule: RuleVersion, actor: string = 'MERCHANT_ADMIN'): RuleVersion {
+  public async saveRuleVersion(rule: RuleVersion, actor: string = 'MERCHANT_ADMIN'): Promise<RuleVersion> {
     this.ruleVersions.set(rule.id, rule);
-    this.logAudit({
+   await this.logAudit({
       storeId: rule.storeId,
       entityId: rule.id,
       entityType: 'RULE',
@@ -1229,9 +1229,9 @@ fullEntry.timestamp
   // ==========================================
   // FEEDBACK METHODS
   // ==========================================
-  public saveFeedback(feedback: MerchantFeedback): MerchantFeedback {
+  public async saveFeedback(feedback: MerchantFeedback): Promise<MerchantFeedback> {
     this.feedback.set(feedback.id, feedback);
-    this.logAudit({
+   await this.logAudit({
       storeId: feedback.storeId,
       entityId: feedback.recommendationId,
       entityType: 'RECOMMENDATION',
@@ -1287,7 +1287,7 @@ fullEntry.timestamp
     if (!store) throw new Error('Store not found');
     const oldPlan = store.activePlan;
     store.activePlan = planId;
-    this.logAudit({
+   await this.logAudit({
       storeId,
       entityId: storeId,
       entityType: 'BILLING',
