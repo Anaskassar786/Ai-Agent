@@ -205,6 +205,7 @@ Respond in JSON ONLY:
     const snapshot: EvidenceSnapshot = {
       snapshotId,
       recommendationId: existingRec ? existingRec.id : `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      storeId: cart.storeId,
       cartId: cart.id,
       evaluatedAt: new Date().toISOString(),
       cartValueAtEval: cart.totalValue,
@@ -248,7 +249,7 @@ Respond in JSON ONLY:
 
           const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
       const savedRecommendation = await recRepo.save(recommendation, actor, actionName);
-  await recRepo.saveEvidence(snapshot);   
+await recRepo.saveEvidence(snapshot);
 
   console.log(
   "USAGE CHECK",
