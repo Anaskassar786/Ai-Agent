@@ -89,6 +89,39 @@ router.get('/inventory', async (req, res) => {
   }
 });
 router.post('/sync', async (req, res) => {
+router.post('/register-webhooks', async (req, res) => {
+  try {
+    const { shop } = req.body;
+
+    if (!shop) {
+      return res.status(400).json({
+        error: 'shop required'
+      });
+    }
+
+    const store = await storeRepo.getByDomain(shop);
+
+    if (!store) {
+      return res.status(404).json({
+        error: 'Store not found'
+      });
+    }
+
+    await shopifyApiService.registerWebhooks(store);
+
+    res.json({
+      success: true,
+      message: 'Webhooks registered'
+    });
+
+  } catch (error: any) {
+    console.error(error);
+
+    res.status(500).json({
+      error: error.message
+    });
+  }
+});
   try {
     const { shop } = req.body;
 
