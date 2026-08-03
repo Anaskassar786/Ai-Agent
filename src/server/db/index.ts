@@ -1190,12 +1190,39 @@ rec.updatedAt
       .slice(0, limit);
   }
 
-  private logAudit(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>) {
+  private async logAudit(entry: Omit<AuditLogEntry, 'id' | 'timestamp'>) {
     const fullEntry: AuditLogEntry = {
       ...entry,
       id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       timestamp: new Date().toISOString()
     };
+await pool.query(
+`
+INSERT INTO audit_logs (
+id,
+store_id,
+actor_id,
+actor_name,
+actor_role,
+action,
+resource_type,
+resource_id,
+timestamp
+)
+VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+`,
+[
+fullEntry.id,
+fullEntry.storeId,
+fullEntry.actor,
+fullEntry.actor,
+fullEntry.actor,
+fullEntry.action,
+fullEntry.entityType,
+fullEntry.entityId,
+fullEntry.timestamp
+]
+);
     this.auditLogs.push(fullEntry);
   }
 
