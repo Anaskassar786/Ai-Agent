@@ -1116,11 +1116,35 @@ rec.updatedAt
   // ==========================================
   // IMMUTABLE EVIDENCE SNAPSHOTS
   // ==========================================
-  public saveEvidenceSnapshot(snapshot: EvidenceSnapshot): EvidenceSnapshot {
-    // Immutable rule: never overwrite evidence!
-    this.evidenceSnapshots.set(snapshot.snapshotId, snapshot);
-    return snapshot;
-  }
+  public async saveEvidenceSnapshot(snapshot: EvidenceSnapshot): Promise<EvidenceSnapshot> {
+
+  await pool.query(
+    `
+    INSERT INTO evidence_snapshots (
+      id,
+      recommendation_id,
+      store_id,
+      cart_id,
+      snapshot_data,
+      created_at
+    )
+    VALUES ($1,$2,$3,$4,$5,$6)
+    ON CONFLICT (id) DO NOTHING
+    `,
+    [
+      snapshot.snapshotId,
+      snapshot.recommendationId,
+      snapshot.rulesFired[0]?.storeId ?? '',
+      snapshot.cartId,
+      JSON.stringify(snapshot),
+      snapshot.evaluatedAt
+    ]
+  );
+
+  this.evidenceSnapshots.set(snapshot.snapshotId, snapshot);
+
+  return snapshot;
+}
 
   public getEvidenceBySnapshotId(id: string): EvidenceSnapshot | undefined {
     return this.evidenceSnapshots.get(id);
