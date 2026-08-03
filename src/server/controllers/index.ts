@@ -649,4 +649,4 @@ export const analyticsController = new AnalyticsController();
 export const auditController = new AuditController();
 export const notifController = new NotificationController();
 export const billingController = new BillingController();
-export const shopifyController = new ShopifyController();
+export { shopifyController } from './shopify.controller.ts';
