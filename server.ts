@@ -307,6 +307,7 @@ with zipfile.ZipFile('/tmp/profit-tool-enterprise-source.zip', 'w', zipfile.ZIP_
   app.get('/api/shopify/callback', (req, res) => shopifyController.callback(req, res));
   app.post('/api/webhooks/shopify/*all', (req, res) => shopifyController.handleWebhook(req, res));
   app.post('/api/test/trigger-abandoned-cart', requireAuth, (req, res) => shopifyController.triggerTestCart(req, res));
+  app.post('/api/shopify/register-webhooks', (req, res) => shopifyController.registerWebhooks(req, res));
 
   // ==========================================
   // VITE MIDDLEWARE & STATIC SERVING
