@@ -977,7 +977,7 @@ VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
  await this.logAudit({
     storeId: cart.storeId,
     entityId: cart.id,
-    entityType: 'CART',
+    entityType: 'WEBHOOK',
     action: 'CART_UPDATED_OR_CREATED',
     actor: 'SHOPIFY_WEBHOOK',
     metadata: {
