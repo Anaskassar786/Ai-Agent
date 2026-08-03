@@ -217,7 +217,6 @@ Respond in JSON ONLY:
       version: nextVersion
     };
 
-    await recRepo.saveEvidence(snapshot);
 
     // 4. Construct or update Recommendation
     const recId = existingRec ? existingRec.id : snapshot.recommendationId;
@@ -249,7 +248,9 @@ Respond in JSON ONLY:
 
           const actionName = existingRec ? 'RECOMMENDATION_RE_EVALUATED_NEW_SNAPSHOT' : 'RECOMMENDATION_CREATED';
       const savedRecommendation = await recRepo.save(recommendation, actor, actionName);
-   console.log(
+  await recRepo.saveEvidence(snapshot);   
+
+  console.log(
   "USAGE CHECK",
   {
     existingRec: Boolean(existingRec),
