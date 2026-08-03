@@ -202,10 +202,10 @@ Respond in JSON ONLY:
     const existingRec = await recRepo.getActiveByCartId(cart.id);
     const nextVersion = existingRec ? existingRec.evidenceHistory.length + 1 : 1;
 
-    const snapshot: EvidenceSnapshot = {
+      const snapshot: EvidenceSnapshot = {
       snapshotId,
       recommendationId: existingRec ? existingRec.id : `rec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      storeId: cart.storeId,
+      storeId: cart.storeId,    
       cartId: cart.id,
       evaluatedAt: new Date().toISOString(),
       cartValueAtEval: cart.totalValue,

@@ -1134,7 +1134,7 @@ rec.updatedAt
     [
       snapshot.snapshotId,
       snapshot.recommendationId,
-      snapshot.rulesFired[0]?.storeId ?? '',
+      snapshot.storeId,
       snapshot.cartId,
       JSON.stringify(snapshot),
       snapshot.evaluatedAt
