@@ -19,25 +19,40 @@ export class ShopifyApiService {
       throw new Error('Shopify access token missing');
     }
 
-    const response = await axios.post(
-      this.getUrl(store),
-      {
-        query,
-        variables
-      },
-      {
-        headers: {
-          'X-Shopify-Access-Token': store.accessToken,
-          'Content-Type': 'application/json'
+    try {
+      const response = await axios.post(
+        this.getUrl(store),
+        {
+          query,
+          variables
+        },
+        {
+          headers: {
+            'X-Shopify-Access-Token': store.accessToken,
+            'Content-Type': 'application/json'
+          }
         }
+      );
+
+      console.log("SHOPIFY GRAPHQL RESPONSE");
+      console.dir(response.data, { depth: null });
+
+      return response.data;
+
+    } catch (error: any) {
+      console.error("SHOPIFY GRAPHQL ERROR");
+
+      if (error.response) {
+        console.error("STATUS:", error.response.status);
+        console.error("DATA:", error.response.data);
+      } else {
+        console.error(error.message);
       }
-    );
 
-    console.log("SHOPIFY GRAPHQL RESPONSE");
-console.dir(response.data, { depth: null });
-
-return response.data;
+      throw error;
+    }
   }
+       
   async getProducts(store: Store) {
     const query = `
       query {
