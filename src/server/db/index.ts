@@ -701,7 +701,7 @@ await this.logAudit({
     entityId: store.id,
     entityType: 'AUTH',
     action: 'STORE_SAVED_OR_UPDATED',
-    actor: 'MERCHANT_ADMIN'
+    actor: 'OWNER',
   });
 
   return store;
@@ -1292,7 +1292,7 @@ fullEntry.timestamp
       entityId: storeId,
       entityType: 'BILLING',
       action: 'BILLING_PLAN_CHANGED',
-      actor: 'MERCHANT_ADMIN',
+      actor: 'OWNER',
       previousStatus: oldPlan,
       newStatus: planId,
       metadata: { newPlan: planId }
