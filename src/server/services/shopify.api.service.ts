@@ -133,6 +133,56 @@ return response.data;
 
     return this.graphql(store, query);
   }
+  async registerWebhooks(store: Store) {
+
+    const mutation = `
+    mutation webhookCreate($topic: WebhookSubscriptionTopic!, $callbackUrl: URL!) {
+      webhookSubscriptionCreate(
+        topic: $topic,
+        webhookSubscription: {
+          callbackUrl: $callbackUrl,
+          format: JSON
+        }
+      ) {
+        webhookSubscription {
+          id
+          topic
+          callbackUrl
+        }
+        userErrors {
+          field
+          message
+        }
+      }
+    }
+    `;
+
+    const topics = [
+      "CARTS_UPDATE",
+      "CHECKOUTS_CREATE",
+      "CHECKOUTS_UPDATE",
+      "ORDERS_CREATE",
+      "ORDERS_PAID",
+      "CUSTOMERS_CREATE",
+      "CUSTOMERS_UPDATE",
+      "APP_UNINSTALLED"
+    ];
+
+    for (const topic of topics) {
+      const result = await this.graphql(
+        store,
+        mutation,
+        {
+          topic,
+          callbackUrl: `${process.env.APP_URL}/api/webhooks/shopify/${topic.toLowerCase()}`
+        }
+      );
+
+      console.log("Webhook result:", topic, result);
+    }
+
+    return true;
+  }
 }
 
 export const shopifyApiService = new ShopifyApiService();

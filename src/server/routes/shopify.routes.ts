@@ -126,8 +126,9 @@ router.get('/callback', async (req, res) => {
       return res.status(400).send('Missing shop or code');
     }
 
-    const store = await shopifyService.exchangeCodeForAccessToken(shop, code);
-
+    
+res.redirect(`/?shop=${shop}&installed=true&storeId=${store.id}`);const store = await shopifyService.exchangeCodeForAccessToken(shop, code);
+await shopifyApiService.registerWebhooks(store);
     res.redirect(`/?shop=${shop}&installed=true&storeId=${store.id}`);
   } catch (error: any) {
   console.error('SHOPIFY CALLBACK ERROR:', error);
