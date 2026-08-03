@@ -48,7 +48,10 @@ export class ShopifyApiService {
       } else {
         console.error(error.message);
       }
-
+console.error(
+  "FULL SHOPIFY ERROR:",
+  JSON.stringify(error.response?.data || error.message, null, 2)
+);
       throw error;
     }
   }
